@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.0] - 2026-01-04
+
+### Added
+- NVIDIA GPU database with 54 GPU models (`internal/gpu/nvidia`)
+- Database interface with Lookup, LookupByName, ListByArchitecture, GetMinDriverVersion
+- Architecture constants: Blackwell, Hopper, Ada Lovelace, Ampere, Turing, Pascal, Maxwell, Kepler, Volta
+- Consumer GPUs: RTX 40xx, 30xx, 20xx series, GTX 16xx, 10xx series
+- Data center GPUs: B200, B100, H200, H100, A100, A40, A30, A10, V100
+- Minimum driver version requirements per architecture
+- Compute capability mappings
+- Thread-safe database implementation
+- 100% test coverage with duplicate ID detection
+
 ## [3.1.0] - 2026-01-04
 
 ### Added
