@@ -1,14 +1,11 @@
 package main
 
-import "fmt"
-
-var (
-	Version   = "1.1.0"
-	BuildTime = "unknown"
-	GitCommit = "unknown"
+import (
+	"os"
 )
 
 func main() {
-	fmt.Printf("Igor - NVIDIA TUI Installer v%s\n", Version)
-	fmt.Printf("Build: %s (%s)\n", BuildTime, GitCommit)
+	cli := NewCLI()
+	exitCode := cli.Run(os.Args[1:])
+	os.Exit(exitCode)
 }
