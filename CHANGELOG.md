@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.0] - 2026-01-03
+
+### Added
+- Zypper package manager implementation for openSUSE
+- Full pkg.Manager interface implementation for Zypper
+- Supports openSUSE Leap, Tumbleweed, and SLES
+- Uses --non-interactive for unattended operation
+- Uses dist-upgrade for full system upgrade
+- NVIDIA repository support for Tumbleweed and Leap versions
+- Repository management via zypper addrepo/modifyrepo
+- rpm -q integration for package queries (shared with DNF/YUM)
+- 90.7% test coverage
+
 ## [2.6.0] - 2026-01-03
 
 ### Added
