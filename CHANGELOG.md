@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.9.0] - 2026-01-03
+
+### Added
+- Distribution-specific NVIDIA package mappings
+- Component types: driver, driver-dkms, cuda, cudnn, nvcc, utils, settings, opencl, vulkan
+- Package mappings for Debian/Ubuntu, Fedora/RHEL, Arch, openSUSE families
+- Distribution-specific overrides (Ubuntu, Pop!_OS, Fedora, Manjaro, Tumbleweed, Leap)
+- Version-specific driver packages (550, 545, 535 LTS, 525, 470 legacy)
+- Repository URLs with GPG keys for all distributions
+- GetAllPackages, GetMinimalPackages, GetDevelopmentPackages, GetGraphicsPackages helpers
+- 97.9% test coverage
+- **Phase 2 Complete!**
+
 ## [2.8.0] - 2026-01-03
 
 ### Added
