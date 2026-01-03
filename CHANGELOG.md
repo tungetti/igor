@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.0] - 2026-01-03
+
+### Added
+- YUM package manager implementation for CentOS 7/RHEL 7
+- Full pkg.Manager interface implementation for YUM
+- Correct handling of yum check-update exit code 100
+- Uses yum update (not upgrade) per YUM conventions
+- Uses yum-config-manager for repository management
+- EPEL repository support with RHEL fallback URL
+- ELRepo repository support for kernel modules
+- NVIDIA CUDA repository support
+- RPM Fusion EL7 repository support
+- Fallback to package-cleanup for older YUM versions
+- 87% test coverage
+
 ## [2.4.0] - 2026-01-03
 
 ### Added
