@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-01-03
+
+### Added
+- APT package manager implementation for Debian/Ubuntu
+- Full pkg.Manager interface implementation (Install, Remove, Update, Upgrade, Search, Info)
+- dpkg-query integration for package status checks
+- apt-cache integration for package search and info
+- PPA support via add-apt-repository
+- Modern GPG key handling (/etc/apt/keyrings) with legacy apt-key fallback
+- Repository management (Add, Remove, List, Enable, Disable)
+- Non-interactive mode with DEBIAN_FRONTEND=noninteractive
+- Input validation to prevent shell injection in GPG key handling
+- 94% test coverage
+
 ## [2.2.0] - 2026-01-03
 
 ### Added
