@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-01-03
+
+### Added
+- Distribution detection core with /etc/os-release parsing
+- 8-level fallback chain for distribution detection
+- Support for 15+ Linux distributions (Ubuntu, Debian, Fedora, RHEL, Rocky, AlmaLinux, CentOS, Arch, Manjaro, EndeavourOS, openSUSE, Linux Mint, Pop!_OS)
+- Distribution family detection (Debian, RHEL, Arch, SUSE)
+- FileReader interface for mockable filesystem access
+- Distribution helper methods (IsDebian, IsRHEL, IsArch, IsSUSE, MajorVersion, IsRolling)
+- 96% test coverage
+
 ## [2.1.0] - 2026-01-03
 
 ### Added
