@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] - 2026-01-03
+
+### Added
+- Application bootstrap and lifecycle management
+- Dependency injection container (Config, Logger, Executor, Privilege)
+- Signal handling (SIGINT, SIGTERM) with graceful shutdown
+- Panic recovery with stack trace logging
+- LIFO shutdown order for cleanup functions
+- 93% test coverage
+
+### Changed
+- Updated main.go to optionally use app package
+
 ## [1.8.0] - 2026-01-03
 
 ### Added
