@@ -502,7 +502,7 @@ Each sprint must pass these gates before approval:
 
 | Sprint ID | Title | Status | Version | Dependencies | Effort |
 |-----------|-------|--------|---------|--------------|--------|
-| P2-MS1 | Define Package Manager Interface | `NOT_STARTED` | 2.1.0 | P1-MS8 | Small |
+| P2-MS1 | Define Package Manager Interface | `COMPLETED` | 2.1.0 | P1-MS8 | Small |
 | P2-MS2 | Implement Distribution Detection Core | `NOT_STARTED` | 2.2.0 | P1-MS8, P1-MS3 | Medium |
 | P2-MS3 | Implement APT Package Manager (Debian/Ubuntu) | `NOT_STARTED` | 2.3.0 | P2-MS1, P2-MS2, P1-MS7 | Large |
 | P2-MS4 | Implement DNF Package Manager (Fedora/RHEL) | `NOT_STARTED` | 2.4.0 | P2-MS1, P2-MS2, P1-MS7 | Large |
@@ -1014,6 +1014,330 @@ cmd/igor/main.go
 
 ---
 
+### Phase 2 Sprint Specifications
+
+#### P2-MS1: Define Package Manager Interface
+
+**Status:** `COMPLETED`
+**Version:** 2.1.0
+**Effort:** Small
+**Dependencies:** P1-MS8
+
+**Description:**
+Define the core package manager interface that all distribution-specific implementations will conform to. This interface abstracts package operations across APT, DNF, YUM, Pacman, and Zypper.
+
+**Files to Create:**
+```
+internal/pkg/manager.go       # Package manager interface
+internal/pkg/types.go         # Package-related types (Package, Repository, etc.)
+internal/pkg/errors.go        # Package manager specific errors
+internal/pkg/manager_test.go  # Interface tests
+```
+
+**Interface Design:**
+```go
+// Package represents a software package
+type Package struct {
+    Name        string
+    Version     string
+    Installed   bool
+    Repository  string
+    Description string
+}
+
+// Repository represents a package repository
+type Repository struct {
+    Name    string
+    URL     string
+    Enabled bool
+    GPGKey  string
+}
+
+// Manager defines the package manager interface
+type Manager interface {
+    // Package operations
+    Install(ctx context.Context, packages ...string) error
+    Remove(ctx context.Context, packages ...string) error
+    Update(ctx context.Context) error
+    Upgrade(ctx context.Context, packages ...string) error
+    
+    // Query operations
+    IsInstalled(ctx context.Context, pkg string) (bool, error)
+    Search(ctx context.Context, query string) ([]Package, error)
+    Info(ctx context.Context, pkg string) (*Package, error)
+    ListInstalled(ctx context.Context) ([]Package, error)
+    
+    // Repository operations
+    AddRepository(ctx context.Context, repo Repository) error
+    RemoveRepository(ctx context.Context, name string) error
+    ListRepositories(ctx context.Context) ([]Repository, error)
+    
+    // Utility
+    Clean(ctx context.Context) error
+    Name() string
+}
+```
+
+**Acceptance Criteria:**
+- [ ] Manager interface with all CRUD operations for packages
+- [ ] Package struct with name, version, installed status
+- [ ] Repository struct for repo management
+- [ ] Custom error types (ErrPackageNotFound, ErrRepositoryExists, etc.)
+- [ ] Context support for cancellation/timeout
+- [ ] >90% test coverage on types and error handling
+
+---
+
+#### P2-MS2: Implement Distribution Detection Core
+
+**Status:** `NOT_STARTED`
+**Version:** 2.2.0
+**Effort:** Medium
+**Dependencies:** P1-MS8, P1-MS3
+
+**Description:**
+Detect the Linux distribution by parsing /etc/os-release, lsb_release, and fallback methods. Determine the distribution family (Debian, RHEL, Arch, SUSE).
+
+**Files to Create:**
+```
+internal/distro/detector.go      # Distribution detection logic
+internal/distro/types.go         # Distribution types and families
+internal/distro/osrelease.go     # /etc/os-release parser
+internal/distro/detector_test.go # Tests with mock filesystems
+```
+
+**Distribution Families:**
+```go
+type Family string
+
+const (
+    FamilyDebian Family = "debian"   // Ubuntu, Debian, Mint, Pop!_OS
+    FamilyRHEL   Family = "rhel"     // Fedora, RHEL, CentOS, Rocky, Alma
+    FamilyArch   Family = "arch"     // Arch, Manjaro, EndeavourOS
+    FamilySUSE   Family = "suse"     // openSUSE Leap, Tumbleweed
+    FamilyUnknown Family = "unknown"
+)
+
+type Distribution struct {
+    ID          string  // e.g., "ubuntu", "fedora"
+    Name        string  // e.g., "Ubuntu 24.04 LTS"
+    Version     string  // e.g., "24.04"
+    VersionID   string  // e.g., "24.04"
+    Family      Family
+    PrettyName  string
+    CodeName    string  // e.g., "noble"
+}
+```
+
+**Acceptance Criteria:**
+- [ ] Parse /etc/os-release correctly
+- [ ] Fallback to lsb_release if needed
+- [ ] Correctly identify distribution family
+- [ ] Support all target distributions (Ubuntu, Debian, Fedora, RHEL, CentOS, Arch, Manjaro, openSUSE)
+- [ ] Mock filesystem for testing
+- [ ] >90% test coverage
+
+---
+
+#### P2-MS3: Implement APT Package Manager (Debian/Ubuntu)
+
+**Status:** `NOT_STARTED`
+**Version:** 2.3.0
+**Effort:** Large
+**Dependencies:** P2-MS1, P2-MS2, P1-MS7
+
+**Description:**
+Implement the Manager interface for APT-based distributions (Debian, Ubuntu, Mint, Pop!_OS).
+
+**Files to Create:**
+```
+internal/pkg/apt/apt.go          # APT implementation
+internal/pkg/apt/apt_test.go     # APT tests
+internal/pkg/apt/repository.go   # APT repository handling
+```
+
+**Acceptance Criteria:**
+- [ ] Implement all Manager interface methods
+- [ ] apt-get update, install, remove, upgrade
+- [ ] dpkg-query for package status
+- [ ] add-apt-repository for PPA support
+- [ ] GPG key handling for repositories
+- [ ] DEBIAN_FRONTEND=noninteractive for unattended operation
+- [ ] >85% test coverage with mocked executor
+
+---
+
+#### P2-MS4: Implement DNF Package Manager (Fedora/RHEL 8+)
+
+**Status:** `NOT_STARTED`
+**Version:** 2.4.0
+**Effort:** Large
+**Dependencies:** P2-MS1, P2-MS2, P1-MS7
+
+**Description:**
+Implement the Manager interface for DNF-based distributions (Fedora, RHEL 8+, Rocky 8+, Alma 8+).
+
+**Files to Create:**
+```
+internal/pkg/dnf/dnf.go          # DNF implementation
+internal/pkg/dnf/dnf_test.go     # DNF tests
+internal/pkg/dnf/repository.go   # DNF repository handling (RPM Fusion)
+```
+
+**Acceptance Criteria:**
+- [ ] Implement all Manager interface methods
+- [ ] dnf check-update, install, remove, upgrade
+- [ ] rpm -q for package status
+- [ ] dnf config-manager for repository management
+- [ ] RPM Fusion repository support
+- [ ] -y flag for non-interactive operation
+- [ ] >85% test coverage
+
+---
+
+#### P2-MS5: Implement YUM Package Manager (CentOS 7/RHEL 7)
+
+**Status:** `NOT_STARTED`
+**Version:** 2.5.0
+**Effort:** Medium
+**Dependencies:** P2-MS1, P2-MS2, P1-MS7
+
+**Description:**
+Implement the Manager interface for YUM-based distributions (CentOS 7, RHEL 7).
+
+**Files to Create:**
+```
+internal/pkg/yum/yum.go          # YUM implementation
+internal/pkg/yum/yum_test.go     # YUM tests
+internal/pkg/yum/repository.go   # YUM repository handling (EPEL)
+```
+
+**Acceptance Criteria:**
+- [ ] Implement all Manager interface methods
+- [ ] yum check-update, install, remove, upgrade
+- [ ] rpm -q for package status
+- [ ] yum-config-manager for repositories
+- [ ] EPEL repository support
+- [ ] -y flag for non-interactive
+- [ ] >85% test coverage
+
+---
+
+#### P2-MS6: Implement Pacman Package Manager (Arch)
+
+**Status:** `NOT_STARTED`
+**Version:** 2.6.0
+**Effort:** Large
+**Dependencies:** P2-MS1, P2-MS2, P1-MS7
+
+**Description:**
+Implement the Manager interface for Pacman-based distributions (Arch, Manjaro, EndeavourOS).
+
+**Files to Create:**
+```
+internal/pkg/pacman/pacman.go       # Pacman implementation
+internal/pkg/pacman/pacman_test.go  # Pacman tests
+internal/pkg/pacman/repository.go   # Pacman repository handling
+```
+
+**Acceptance Criteria:**
+- [ ] Implement all Manager interface methods
+- [ ] pacman -Syu, -S, -R, -Ss, -Q
+- [ ] --noconfirm for non-interactive
+- [ ] Repository configuration via pacman.conf
+- [ ] Handle Arch-specific NVIDIA packages (nvidia, nvidia-dkms)
+- [ ] >85% test coverage
+
+---
+
+#### P2-MS7: Implement Zypper Package Manager (openSUSE)
+
+**Status:** `NOT_STARTED`
+**Version:** 2.7.0
+**Effort:** Large
+**Dependencies:** P2-MS1, P2-MS2, P1-MS7
+
+**Description:**
+Implement the Manager interface for Zypper-based distributions (openSUSE Leap, Tumbleweed).
+
+**Files to Create:**
+```
+internal/pkg/zypper/zypper.go       # Zypper implementation
+internal/pkg/zypper/zypper_test.go  # Zypper tests
+internal/pkg/zypper/repository.go   # Zypper repository handling
+```
+
+**Acceptance Criteria:**
+- [ ] Implement all Manager interface methods
+- [ ] zypper refresh, install, remove, update
+- [ ] zypper search, info
+- [ ] zypper addrepo, removerepo
+- [ ] --non-interactive flag
+- [ ] Handle openSUSE NVIDIA repository
+- [ ] >85% test coverage
+
+---
+
+#### P2-MS8: Create Package Manager Factory
+
+**Status:** `NOT_STARTED`
+**Version:** 2.8.0
+**Effort:** Small
+**Dependencies:** P2-MS2 through P2-MS7
+
+**Description:**
+Create a factory that returns the correct package manager implementation based on detected distribution.
+
+**Files to Create:**
+```
+internal/pkg/factory.go        # Package manager factory
+internal/pkg/factory_test.go   # Factory tests
+```
+
+**Acceptance Criteria:**
+- [ ] Return correct Manager for each distribution family
+- [ ] Handle unknown distributions with meaningful error
+- [ ] Support dependency injection for testing
+- [ ] Lazy initialization of package managers
+- [ ] >90% test coverage
+
+---
+
+#### P2-MS9: Create Distribution-Specific NVIDIA Package Mappings
+
+**Status:** `NOT_STARTED`
+**Version:** 2.9.0
+**Effort:** Medium
+**Dependencies:** P2-MS8
+
+**Description:**
+Create mappings between NVIDIA components and distribution-specific package names.
+
+**Files to Create:**
+```
+internal/pkg/nvidia/packages.go       # NVIDIA package mappings
+internal/pkg/nvidia/packages_test.go  # Package mapping tests
+internal/pkg/nvidia/repository.go     # NVIDIA repository definitions
+```
+
+**Package Mappings:**
+| Component | Ubuntu/Debian | Fedora/RHEL | Arch | openSUSE |
+|-----------|--------------|-------------|------|----------|
+| Driver | nvidia-driver-XXX | akmod-nvidia | nvidia | nvidia-driver-G06 |
+| CUDA Toolkit | cuda-toolkit-XX-X | cuda | cuda | cuda |
+| cuDNN | libcudnn8 | cudnn | cudnn | - |
+| NVCC | nvidia-cuda-toolkit | cuda-compiler | cuda | cuda |
+
+**Acceptance Criteria:**
+- [ ] Package name mapping for all target distributions
+- [ ] Version-specific package mappings (driver versions)
+- [ ] Repository URLs for NVIDIA repos per distribution
+- [ ] GPG key URLs for each repository
+- [ ] Helper to get all required packages for a component
+- [ ] >90% test coverage
+
+---
+
 ## 5. Activity Log
 
 ### Log Format
@@ -1433,6 +1757,49 @@ Additional context
 **Notes:**
 - Phase 1 Foundation Layer is now COMPLETE
 - Ready for Phase 2 (Distribution Detection & Package Manager Abstraction)
+
+---
+
+#### Session 2026-01-03 16:30 - P2-MS1 Implementation
+
+**Sprint:** P2-MS1
+**Version:** 2.1.0
+**Status:** COMPLETED
+
+**Activities:**
+- [x] Created Phase 2 sprint specifications in IGOR_PROJECT.md
+- [x] Delegated implementation to code-implementator agent
+- [x] Created internal/pkg/types.go with Package, Repository, Options types
+- [x] Created internal/pkg/errors.go with package manager errors
+- [x] Created internal/pkg/manager.go with Manager interface
+- [x] Created internal/pkg/manager_test.go with comprehensive tests
+- [x] Code review by code-reviewer agent - APPROVED
+- [x] All tests passed with 100% coverage
+
+**Features Implemented:**
+- Manager interface with all CRUD operations for packages
+- Extended interfaces: RepositoryManager, LockableManager, TransactionalManager, HistoryManager
+- ManagerFactory interface for dependency injection
+- Package struct with Name, Version, Installed, Repository, Description, Size
+- Repository struct with Name, URL, Enabled, GPGKey, Type
+- InstallOptions, UpdateOptions, RemoveOptions, SearchOptions with defaults
+- PackageError type with errors.Is/As support and igor integration
+- 14 sentinel errors for package operations
+
+**Test Results:**
+- `internal/pkg`: 100% coverage
+- `go build ./...`: PASS
+- `go test ./...`: PASS
+- `go vet ./...`: PASS
+
+**Human Validation:** APPROVED
+
+**Commits:**
+- `[Phase 2 Sprint 1] Define package manager interface` - v2.1.0
+
+**Notes:**
+- Phase 2 has begun
+- Ready for P2-MS2 (Implement Distribution Detection Core)
 
 ---
 

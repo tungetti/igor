@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-01-03
+
+### Added
+- Package manager interface (Manager) for cross-distribution support
+- Package and Repository types with helper methods
+- Extended interfaces: RepositoryManager, LockableManager, TransactionalManager, HistoryManager
+- Install/Update/Remove/Search options types with factory functions
+- Package manager error types with errors.Is/As support
+- Integration with internal/errors package
+- 100% test coverage
+
 ## [1.9.0] - 2026-01-03
 
 ### Added
