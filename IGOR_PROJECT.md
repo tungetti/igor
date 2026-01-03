@@ -1303,6 +1303,529 @@ internal/pkg/nvidia/repository.go     # NVIDIA repository definitions
 
 ---
 
+### Phase 3 Sprint Specifications
+
+#### P3-MS1: Implement PCI Device Scanner
+
+**Status:** `NOT_STARTED`
+**Version:** 3.1.0
+**Effort:** Medium
+**Dependencies:** P1-MS8
+
+**Description:**
+Implement a PCI device scanner that reads from `/sys/bus/pci/devices` to detect all PCI devices, with a focus on identifying NVIDIA GPUs. This is the foundation for GPU detection.
+
+**Files to Create:**
+```
+internal/gpu/pci/scanner.go       # PCI device scanning logic
+internal/gpu/pci/device.go        # PCI device struct and parsing
+internal/gpu/pci/scanner_test.go  # Scanner tests with mock sysfs
+```
+
+**PCI Device Structure:**
+```go
+// PCIDevice represents a PCI device
+type PCIDevice struct {
+    Address     string // e.g., "0000:01:00.0"
+    VendorID    string // e.g., "10de" for NVIDIA
+    DeviceID    string // e.g., "2684" for RTX 4090
+    Class       string // e.g., "0300" for VGA controller
+    SubVendorID string
+    SubDeviceID string
+    Driver      string // Currently loaded driver (nvidia, nouveau, vfio-pci)
+    Revision    string
+}
+
+// Scanner interface for PCI device discovery
+type Scanner interface {
+    // ScanAll returns all PCI devices
+    ScanAll(ctx context.Context) ([]PCIDevice, error)
+    
+    // ScanByVendor returns devices matching vendor ID
+    ScanByVendor(ctx context.Context, vendorID string) ([]PCIDevice, error)
+    
+    // ScanByClass returns devices matching class code
+    ScanByClass(ctx context.Context, classCode string) ([]PCIDevice, error)
+    
+    // ScanNVIDIA returns all NVIDIA GPU devices
+    ScanNVIDIA(ctx context.Context) ([]PCIDevice, error)
+}
+```
+
+**Implementation Notes:**
+- Read from `/sys/bus/pci/devices/*/` for device info
+- Parse `vendor`, `device`, `class`, `subsystem_vendor`, `subsystem_device`
+- Check `driver` symlink for currently bound driver
+- NVIDIA vendor ID: `0x10de`
+- VGA class: `0x0300`, 3D controller class: `0x0302`
+
+**Acceptance Criteria:**
+- [ ] Scanner interface defined with all methods
+- [ ] PCIDevice struct with all relevant fields
+- [ ] Reads from `/sys/bus/pci/devices` directory
+- [ ] Parses vendor, device, class from sysfs files
+- [ ] Detects currently bound driver via symlink
+- [ ] ScanNVIDIA filters by vendor ID 0x10de
+- [ ] Mock sysfs for unit testing
+- [ ] >90% test coverage
+
+---
+
+#### P3-MS2: Create NVIDIA GPU Database
+
+**Status:** `NOT_STARTED`
+**Version:** 3.2.0
+**Effort:** Medium
+**Dependencies:** P3-MS1
+
+**Description:**
+Create a database mapping NVIDIA PCI device IDs to GPU models, architectures, and driver requirements. This enables matching detected hardware to appropriate driver versions.
+
+**Files to Create:**
+```
+internal/gpu/nvidia/database.go      # GPU database and lookup
+internal/gpu/nvidia/models.go        # GPU model definitions
+internal/gpu/nvidia/database_test.go # Database tests
+```
+
+**GPU Model Structure:**
+```go
+// Architecture represents NVIDIA GPU architecture
+type Architecture string
+
+const (
+    ArchTuring   Architecture = "turing"    // RTX 20xx, GTX 16xx
+    ArchAmpere   Architecture = "ampere"    // RTX 30xx
+    ArchAdaLovelace Architecture = "ada"    // RTX 40xx
+    ArchHopper   Architecture = "hopper"    // H100
+    ArchBlackwell Architecture = "blackwell" // B100, B200
+    ArchPascal   Architecture = "pascal"    // GTX 10xx
+    ArchMaxwell  Architecture = "maxwell"   // GTX 9xx
+    ArchKepler   Architecture = "kepler"    // GTX 6xx, 7xx
+    ArchUnknown  Architecture = "unknown"
+)
+
+// GPUModel represents an NVIDIA GPU model
+type GPUModel struct {
+    DeviceID       string       // PCI device ID
+    Name           string       // e.g., "GeForce RTX 4090"
+    Architecture   Architecture
+    MinDriverVersion string     // Minimum supported driver version
+    ComputeCapability string    // e.g., "8.9" for Ada
+    MemorySize     string       // e.g., "24GB"
+    IsDataCenter   bool         // H100, A100, etc.
+}
+
+// Database provides GPU model lookup
+type Database interface {
+    Lookup(deviceID string) (*GPUModel, bool)
+    LookupByName(name string) (*GPUModel, bool)
+    ListByArchitecture(arch Architecture) []GPUModel
+    GetMinDriverVersion(deviceID string) (string, error)
+}
+```
+
+**Acceptance Criteria:**
+- [ ] Database interface for GPU lookup
+- [ ] GPU model struct with all relevant fields
+- [ ] Database of common NVIDIA GPUs (RTX 20xx through 50xx, GTX 10xx/16xx)
+- [ ] Data center GPU support (A100, H100, H200)
+- [ ] Architecture detection from device ID
+- [ ] Minimum driver version requirements per architecture
+- [ ] Lookup by device ID and by name
+- [ ] >90% test coverage
+
+---
+
+#### P3-MS3: Implement nvidia-smi Parser
+
+**Status:** `NOT_STARTED`
+**Version:** 3.3.0
+**Effort:** Medium
+**Dependencies:** P1-MS8, P3-MS2
+
+**Description:**
+Parse `nvidia-smi` output to detect installed NVIDIA drivers, their version, and GPU status. This provides runtime GPU information when drivers are installed.
+
+**Files to Create:**
+```
+internal/gpu/smi/parser.go       # nvidia-smi output parser
+internal/gpu/smi/types.go        # nvidia-smi data types
+internal/gpu/smi/parser_test.go  # Parser tests with sample output
+```
+
+**SMI Data Structure:**
+```go
+// SMIInfo represents nvidia-smi output
+type SMIInfo struct {
+    DriverVersion  string
+    CUDAVersion    string
+    GPUs           []SMIGPUInfo
+    Available      bool // true if nvidia-smi works
+}
+
+// SMIGPUInfo represents per-GPU info from nvidia-smi
+type SMIGPUInfo struct {
+    Index           int
+    Name            string
+    UUID            string
+    MemoryTotal     string
+    MemoryUsed      string
+    MemoryFree      string
+    Temperature     int
+    PowerDraw       string
+    PowerLimit      string
+    UtilizationGPU  int
+    UtilizationMem  int
+    ComputeMode     string
+    PersistenceMode bool
+}
+
+// Parser interface
+type Parser interface {
+    // Parse runs nvidia-smi and parses output
+    Parse(ctx context.Context) (*SMIInfo, error)
+    
+    // IsAvailable checks if nvidia-smi is available
+    IsAvailable(ctx context.Context) bool
+    
+    // GetDriverVersion returns just the driver version
+    GetDriverVersion(ctx context.Context) (string, error)
+}
+```
+
+**Implementation Notes:**
+- Use `nvidia-smi --query-gpu=... --format=csv,noheader,nounits` for parseable output
+- Handle case where nvidia-smi is not installed
+- Handle case where driver is installed but not loaded
+
+**Acceptance Criteria:**
+- [ ] Parser interface defined
+- [ ] Parse nvidia-smi CSV output format
+- [ ] Extract driver version, CUDA version
+- [ ] Extract per-GPU info (name, memory, utilization)
+- [ ] Handle nvidia-smi not found gracefully
+- [ ] Handle nvidia-smi errors (driver not loaded)
+- [ ] Uses exec.Executor for testability
+- [ ] >90% test coverage with sample outputs
+
+---
+
+#### P3-MS4: Create Nouveau Driver Detector
+
+**Status:** `NOT_STARTED`
+**Version:** 3.4.0
+**Effort:** Small
+**Dependencies:** P3-MS1, P1-MS8
+
+**Description:**
+Detect if the Nouveau open-source NVIDIA driver is currently loaded and bound to GPU devices. This is critical because Nouveau must be blacklisted before installing proprietary drivers.
+
+**Files to Create:**
+```
+internal/gpu/nouveau/detector.go      # Nouveau detection logic
+internal/gpu/nouveau/detector_test.go # Detector tests
+```
+
+**Detector Interface:**
+```go
+// Status represents Nouveau driver status
+type Status struct {
+    Loaded          bool     // Kernel module loaded
+    InUse           bool     // Currently in use by GPU
+    BoundDevices    []string // PCI addresses bound to nouveau
+    BlacklistExists bool     // /etc/modprobe.d blacklist exists
+}
+
+// Detector interface
+type Detector interface {
+    // Detect checks Nouveau driver status
+    Detect(ctx context.Context) (*Status, error)
+    
+    // IsLoaded checks if nouveau module is loaded
+    IsLoaded(ctx context.Context) (bool, error)
+    
+    // IsBlacklisted checks if nouveau is blacklisted
+    IsBlacklisted(ctx context.Context) (bool, error)
+    
+    // GetBoundDevices returns PCI addresses using nouveau
+    GetBoundDevices(ctx context.Context) ([]string, error)
+}
+```
+
+**Implementation Notes:**
+- Check `/sys/module/nouveau` for loaded module
+- Check `/proc/modules` for module in use count
+- Check PCI devices' driver symlinks for "nouveau"
+- Check `/etc/modprobe.d/*.conf` for nouveau blacklist
+
+**Acceptance Criteria:**
+- [ ] Detector interface defined
+- [ ] Detect if nouveau kernel module is loaded
+- [ ] Detect if nouveau is in use (has bound devices)
+- [ ] List PCI devices bound to nouveau
+- [ ] Check for existing nouveau blacklist configuration
+- [ ] Uses exec.Executor for testability
+- [ ] >90% test coverage
+
+---
+
+#### P3-MS5: Implement Kernel Version and Module Detection
+
+**Status:** `NOT_STARTED`
+**Version:** 3.5.0
+**Effort:** Medium
+**Dependencies:** P1-MS8, P2-MS8
+
+**Description:**
+Detect kernel version, loaded kernel modules, and kernel headers installation status. This is needed to verify DKMS compatibility and kernel module requirements.
+
+**Files to Create:**
+```
+internal/gpu/kernel/detector.go      # Kernel detection logic
+internal/gpu/kernel/modules.go       # Kernel module operations
+internal/gpu/kernel/detector_test.go # Detector tests
+```
+
+**Kernel Info Structure:**
+```go
+// KernelInfo represents kernel information
+type KernelInfo struct {
+    Version        string // e.g., "6.5.0-44-generic"
+    Release        string // e.g., "6.5.0"
+    Architecture   string // e.g., "x86_64"
+    HeadersPath    string // e.g., "/usr/src/linux-headers-6.5.0-44-generic"
+    HeadersInstalled bool
+    SecureBootEnabled bool
+}
+
+// ModuleInfo represents a kernel module
+type ModuleInfo struct {
+    Name       string
+    Size       int64
+    UsedBy     []string
+    State      string // "Live", "Loading", "Unloading"
+}
+
+// Detector interface
+type Detector interface {
+    // GetKernelInfo returns kernel information
+    GetKernelInfo(ctx context.Context) (*KernelInfo, error)
+    
+    // IsModuleLoaded checks if a module is loaded
+    IsModuleLoaded(ctx context.Context, name string) (bool, error)
+    
+    // GetLoadedModules returns all loaded modules
+    GetLoadedModules(ctx context.Context) ([]ModuleInfo, error)
+    
+    // AreHeadersInstalled checks if kernel headers are installed
+    AreHeadersInstalled(ctx context.Context) (bool, error)
+    
+    // GetHeadersPackage returns the package name for kernel headers
+    GetHeadersPackage(ctx context.Context) (string, error)
+    
+    // IsSecureBootEnabled checks Secure Boot status
+    IsSecureBootEnabled(ctx context.Context) (bool, error)
+}
+```
+
+**Implementation Notes:**
+- Use `uname -r` for kernel version
+- Parse `/proc/modules` for loaded modules
+- Check `/usr/src/linux-headers-$(uname -r)` for headers
+- Use `mokutil --sb-state` for Secure Boot detection
+- Kernel headers package varies by distro
+
+**Acceptance Criteria:**
+- [ ] Detector interface defined
+- [ ] Parse kernel version from uname
+- [ ] Parse /proc/modules for loaded modules
+- [ ] Detect kernel headers installation
+- [ ] Distribution-aware headers package name detection
+- [ ] Secure Boot detection
+- [ ] Uses exec.Executor for testability
+- [ ] >90% test coverage
+
+---
+
+#### P3-MS6: Create System Requirements Validator
+
+**Status:** `NOT_STARTED`
+**Version:** 3.6.0
+**Effort:** Medium
+**Dependencies:** P3-MS5, P2-MS8
+
+**Description:**
+Validate system requirements for NVIDIA driver installation including disk space, kernel compatibility, required packages, and Secure Boot status.
+
+**Files to Create:**
+```
+internal/gpu/validator/validator.go      # Validation logic
+internal/gpu/validator/checks.go         # Individual check implementations
+internal/gpu/validator/validator_test.go # Validator tests
+```
+
+**Validation Structure:**
+```go
+// CheckResult represents a single validation check result
+type CheckResult struct {
+    Name        string
+    Passed      bool
+    Message     string
+    Severity    Severity // Error, Warning, Info
+    Remediation string   // How to fix if failed
+}
+
+type Severity string
+
+const (
+    SeverityError   Severity = "error"   // Installation cannot proceed
+    SeverityWarning Severity = "warning" // May cause issues
+    SeverityInfo    Severity = "info"    // Informational only
+)
+
+// ValidationReport represents all check results
+type ValidationReport struct {
+    Passed      bool
+    Checks      []CheckResult
+    Errors      []CheckResult
+    Warnings    []CheckResult
+    Timestamp   time.Time
+}
+
+// Validator interface
+type Validator interface {
+    // Validate runs all checks and returns report
+    Validate(ctx context.Context) (*ValidationReport, error)
+    
+    // ValidateKernel checks kernel compatibility
+    ValidateKernel(ctx context.Context) (*CheckResult, error)
+    
+    // ValidateDiskSpace checks available disk space
+    ValidateDiskSpace(ctx context.Context, requiredMB int64) (*CheckResult, error)
+    
+    // ValidateSecureBoot checks Secure Boot configuration
+    ValidateSecureBoot(ctx context.Context) (*CheckResult, error)
+    
+    // ValidateKernelHeaders checks kernel headers
+    ValidateKernelHeaders(ctx context.Context) (*CheckResult, error)
+    
+    // ValidateBuildTools checks for gcc, make, etc.
+    ValidateBuildTools(ctx context.Context) (*CheckResult, error)
+}
+```
+
+**Implementation Notes:**
+- Minimum 5GB disk space recommended for CUDA toolkit
+- Kernel headers required for DKMS
+- gcc, make required for module building
+- Secure Boot requires signed modules
+
+**Acceptance Criteria:**
+- [ ] Validator interface defined
+- [ ] Check disk space availability (configurable threshold)
+- [ ] Check kernel headers installation
+- [ ] Check build tools (gcc, make) presence
+- [ ] Check Secure Boot status with appropriate warning
+- [ ] Check kernel version compatibility
+- [ ] Aggregate results into ValidationReport
+- [ ] Severity levels for different issues
+- [ ] Remediation suggestions for failed checks
+- [ ] >90% test coverage
+
+---
+
+#### P3-MS7: Build GPU Detection Orchestrator
+
+**Status:** `NOT_STARTED`
+**Version:** 3.7.0
+**Effort:** Medium
+**Dependencies:** P3-MS1 through P3-MS6
+
+**Description:**
+Orchestrate all GPU detection components into a unified interface that provides comprehensive system GPU information and installation readiness assessment.
+
+**Files to Create:**
+```
+internal/gpu/orchestrator.go      # Main orchestrator
+internal/gpu/types.go             # Shared GPU types
+internal/gpu/orchestrator_test.go # Orchestrator tests
+```
+
+**Orchestrator Interface:**
+```go
+// GPUInfo represents complete GPU information
+type GPUInfo struct {
+    // Hardware detection
+    PCIDevices      []pci.PCIDevice
+    NVIDIAGPUs      []NVIDIAGPUInfo
+    
+    // Driver status
+    InstalledDriver *DriverInfo
+    NouveauStatus   *nouveau.Status
+    
+    // System info
+    KernelInfo      *kernel.KernelInfo
+    ValidationReport *validator.ValidationReport
+    
+    // Detection metadata
+    DetectionTime   time.Time
+    Errors          []error
+}
+
+// NVIDIAGPUInfo combines hardware and database info
+type NVIDIAGPUInfo struct {
+    PCIDevice     pci.PCIDevice
+    Model         *nvidia.GPUModel // nil if not in database
+    SMIInfo       *smi.SMIGPUInfo  // nil if nvidia-smi unavailable
+}
+
+// DriverInfo represents installed driver information
+type DriverInfo struct {
+    Installed     bool
+    Type          string // "nvidia", "nouveau", "none"
+    Version       string
+    CUDAVersion   string
+}
+
+// Orchestrator interface
+type Orchestrator interface {
+    // DetectAll runs all detection components
+    DetectAll(ctx context.Context) (*GPUInfo, error)
+    
+    // DetectGPUs detects GPU hardware only
+    DetectGPUs(ctx context.Context) ([]NVIDIAGPUInfo, error)
+    
+    // GetDriverStatus gets current driver status
+    GetDriverStatus(ctx context.Context) (*DriverInfo, error)
+    
+    // ValidateSystem validates installation requirements
+    ValidateSystem(ctx context.Context) (*validator.ValidationReport, error)
+    
+    // IsReadyForInstall checks if system is ready for driver install
+    IsReadyForInstall(ctx context.Context) (bool, []string, error)
+}
+```
+
+**Implementation Notes:**
+- Aggregate results from all detection components
+- Handle partial failures gracefully (one component failure shouldn't stop others)
+- Provide clear readiness assessment
+- Cache results where appropriate
+
+**Acceptance Criteria:**
+- [ ] Orchestrator interface defined
+- [ ] Integrates PCI scanner, GPU database, nvidia-smi parser
+- [ ] Integrates Nouveau detector, kernel detector, validator
+- [ ] Aggregates all GPU info into unified struct
+- [ ] Handles partial failures gracefully
+- [ ] IsReadyForInstall returns clear yes/no with reasons
+- [ ] Detection timeout support
+- [ ] Uses dependency injection for all components
+- [ ] >90% test coverage
+
+---
+
 ## 5. Activity Log
 
 ### Log Format
