@@ -44,105 +44,95 @@
 | **Arch** | Arch Linux, Manjaro, EndeavourOS | Pacman |
 | **SUSE** | openSUSE Leap, openSUSE Tumbleweed | Zypper |
 
-### 1.4 Project Structure
+### 1.4 Project Structure (Current State after Phase 2)
 
 ```
 igor/
-├── cmd/igor/                    # Main entry point
-│   ├── main.go
-│   ├── cli.go
-│   └── version.go
+├── cmd/igor/                    # Main entry point [IMPLEMENTED]
+│   ├── main.go                  # Entry point with version
+│   ├── cli.go                   # CLI integration
+│   └── version.go               # Build version variables
 ├── internal/
-│   ├── app/                     # Application lifecycle
-│   │   ├── app.go
-│   │   ├── container.go
-│   │   └── lifecycle.go
-│   ├── cli/                     # CLI parsing
-│   │   ├── parser.go
-│   │   ├── commands.go
-│   │   └── flags.go
-│   ├── config/                  # Configuration management
-│   │   ├── config.go
-│   │   ├── loader.go
-│   │   ├── validator.go
-│   │   └── defaults.go
-│   ├── constants/               # Application constants
-│   │   └── constants.go
-│   ├── distro/                  # Distribution detection
-│   │   ├── distro.go
-│   │   ├── detect.go
-│   │   └── types.go
-│   ├── errors/                  # Custom error types
-│   │   └── errors.go
-│   ├── exec/                    # Command execution
-│   │   ├── executor.go
-│   │   ├── mock.go
-│   │   └── output.go
-│   ├── gpu/                     # GPU detection
-│   │   ├── detector.go
-│   │   ├── report.go
-│   │   ├── pci/
-│   │   │   ├── scanner.go
-│   │   │   ├── device.go
-│   │   │   └── sysfs.go
-│   │   ├── nvidia/
-│   │   │   ├── database.go
-│   │   │   ├── smi.go
-│   │   │   └── smi_parser.go
-│   │   ├── nouveau/
-│   │   │   └── detector.go
-│   │   ├── kernel/
-│   │   │   ├── kernel.go
-│   │   │   ├── modules.go
-│   │   │   └── dkms.go
-│   │   └── requirements/
-│   │       ├── validator.go
-│   │       ├── checks.go
-│   │       └── report.go
-│   ├── install/                 # Installation orchestration
-│   │   ├── workflow.go
-│   │   ├── step.go
-│   │   ├── context.go
-│   │   ├── orchestrator.go
-│   │   ├── steps/
-│   │   │   ├── validate.go
-│   │   │   ├── repository.go
-│   │   │   ├── nouveau.go
-│   │   │   ├── install.go
-│   │   │   ├── dkms.go
-│   │   │   ├── modprobe.go
-│   │   │   ├── xorg.go
-│   │   │   └── verify.go
-│   │   └── builders/
-│   │       ├── debian.go
-│   │       ├── rhel.go
-│   │       ├── arch.go
-│   │       └── suse.go
-│   ├── logging/                 # Logging infrastructure
-│   │   ├── logger.go
-│   │   └── levels.go
-│   ├── pkg/                     # Package manager abstraction
-│   │   ├── manager.go
-│   │   ├── types.go
-│   │   ├── factory.go
-│   │   ├── apt/
+│   ├── app/                     # Application lifecycle [P1-MS9]
+│   │   ├── app.go               # Application struct
+│   │   ├── container.go         # Dependency injection
+│   │   └── lifecycle.go         # Signal handling, shutdown
+│   ├── cli/                     # CLI parsing [P1-MS6]
+│   │   ├── parser.go            # Argument parser
+│   │   ├── commands.go          # Subcommands
+│   │   └── flags.go             # Flag definitions
+│   ├── config/                  # Configuration [P1-MS5]
+│   │   ├── config.go            # Config struct
+│   │   ├── loader.go            # YAML/env loader
+│   │   ├── validator.go         # Validation
+│   │   └── defaults.go          # Default values
+│   ├── constants/               # Constants [P1-MS3]
+│   │   └── constants.go         # DistroFamily, exit codes
+│   ├── distro/                  # Distribution detection [P2-MS2]
+│   │   ├── detector.go          # Main detector
+│   │   ├── osrelease.go         # /etc/os-release parser
+│   │   └── types.go             # Distribution struct
+│   ├── errors/                  # Custom errors [P1-MS3]
+│   │   └── errors.go            # Error types with codes
+│   ├── exec/                    # Command execution [P1-MS8]
+│   │   ├── executor.go          # Executor interface
+│   │   ├── mock.go              # MockExecutor for tests
+│   │   └── output.go            # Result struct
+│   ├── logging/                 # Logging [P1-MS4]
+│   │   ├── logger.go            # Logger interface
+│   │   └── levels.go            # Log levels
+│   ├── pkg/                     # Package managers [P2-MS1-MS9]
+│   │   ├── manager.go           # Manager interface
+│   │   ├── types.go             # Package, Repository structs
+│   │   ├── errors.go            # Package-specific errors
+│   │   ├── factory/             # Factory pattern [P2-MS8]
+│   │   │   └── factory.go
+│   │   ├── apt/                 # APT [P2-MS3]
 │   │   │   ├── apt.go
 │   │   │   ├── parser.go
 │   │   │   └── repository.go
-│   │   ├── dnf/
+│   │   ├── dnf/                 # DNF [P2-MS4]
 │   │   │   ├── dnf.go
 │   │   │   ├── parser.go
 │   │   │   └── repository.go
-│   │   ├── yum/
+│   │   ├── yum/                 # YUM [P2-MS5]
 │   │   │   ├── yum.go
 │   │   │   ├── parser.go
 │   │   │   └── repository.go
-│   │   ├── pacman/
+│   │   ├── pacman/              # Pacman [P2-MS6]
 │   │   │   ├── pacman.go
 │   │   │   ├── parser.go
 │   │   │   └── repository.go
-│   │   ├── zypper/
+│   │   ├── zypper/              # Zypper [P2-MS7]
 │   │   │   ├── zypper.go
+│   │   │   ├── parser.go
+│   │   │   └── repository.go
+│   │   └── nvidia/              # NVIDIA packages [P2-MS9]
+│   │       ├── packages.go
+│   │       └── repository.go
+│   ├── privilege/               # Root privileges [P1-MS7]
+│   │   ├── privilege.go         # Manager interface
+│   │   ├── sudo.go              # sudo support
+│   │   └── pkexec.go            # pkexec support
+│   ├── gpu/                     # GPU detection [Phase 3 - PENDING]
+│   ├── install/                 # Installation [Phase 5 - PENDING]
+│   ├── recovery/                # Recovery [Phase 6 - PENDING]
+│   ├── testing/                 # Test utilities [Phase 7 - PENDING]
+│   ├── ui/                      # TUI [Phase 4 - PENDING]
+│   └── uninstall/               # Uninstall [Phase 6 - PENDING]
+├── pkg/                         # Public packages (empty)
+├── scripts/
+│   ├── build.sh
+│   └── test.sh
+├── go.mod                       # Go module
+├── go.sum
+├── Makefile
+├── VERSION                      # Current: 2.9.0
+├── CHANGELOG.md
+├── README.md
+├── LICENSE                      # MIT
+├── IGOR_PROJECT.md              # This file (Single Source of Truth)
+└── install_nvidia.sh            # Original bash script (reference)
 │   │   │   ├── parser.go
 │   │   │   └── repository.go
 │   │   └── nvidia/
@@ -153,67 +143,42 @@ igor/
 │   │       └── suse.go
 │   ├── privilege/               # Root privilege handling
 │   │   ├── privilege.go
-│   │   ├── sudo.go
-│   │   └── pkexec.go
-│   ├── recovery/                # Recovery mode
-│   │   ├── recovery.go
-│   │   └── minimal.go
-│   ├── testing/                 # Test utilities
-│   │   ├── mocks/
-│   │   ├── fixtures/
-│   │   └── helpers.go
-│   ├── ui/                      # TUI components
-│   │   ├── app.go
-│   │   ├── model.go
-│   │   ├── update.go
-│   │   ├── view.go
-│   │   ├── messages.go
-│   │   ├── navigation.go
-│   │   ├── theme/
-│   │   │   ├── theme.go
-│   │   │   ├── colors.go
-│   │   │   ├── styles.go
-│   │   │   └── components.go
-│   │   ├── components/
-│   │   │   ├── header.go
-│   │   │   ├── footer.go
-│   │   │   ├── statusbar.go
-│   │   │   ├── dialog.go
-│   │   │   └── keyhints.go
-│   │   └── views/
-│   │       ├── welcome/
-│   │       ├── detection/
-│   │       ├── driverselect/
-│   │       ├── confirm/
-│   │       ├── progress/
-│   │       ├── complete/
-│   │       ├── error/
-│   │       └── uninstall/
-│   └── uninstall/               # Uninstallation logic
-│       ├── workflow.go
-│       ├── orchestrator.go
-│       └── steps/
-│           ├── discover.go
-│           ├── remove.go
-│           ├── modules.go
-│           ├── config.go
-│           └── fallback.go
-├── pkg/                         # Public reusable packages
-├── scripts/
-│   ├── build.sh
-│   └── test.sh
-├── docs/
-│   └── templates/
-├── .gitignore
-├── go.mod
-├── go.sum
-├── Makefile
-├── VERSION
-├── CHANGELOG.md
-├── LICENSE
-├── README.md
-└── IGOR_PROJECT.md              # This file
 ```
+
+### 1.5 Current Project Metrics (as of v2.9.0)
+
+| Metric | Value |
+|--------|-------|
+| **Version** | 2.9.0 |
+| **Total Go Files** | 62 (44 source + 18 test) |
+| **Lines of Code** | ~28,500 |
+| **Test Coverage** | 90%+ average |
+| **Commits** | 19 |
+| **Tags** | 18 (v1.1.0 - v2.9.0) |
+| **Phases Complete** | 2 of 7 |
+| **Sprints Complete** | 18 of 62 |
+
+### 1.6 Package Test Coverage
+
+| Package | Coverage |
+|---------|----------|
+| internal/constants | 100% |
+| internal/errors | 100% |
+| internal/pkg (interface) | 100% |
+| internal/logging | 98.9% |
+| internal/exec | 98.4% |
+| internal/cli | 97% |
+| internal/pkg/factory | 97% |
+| internal/pkg/nvidia | 97.9% |
+| internal/distro | 96% |
+| internal/pkg/apt | 94% |
+| internal/pkg/dnf | 93.8% |
+| internal/app | 93% |
+| internal/privilege | 91% |
+| internal/pkg/zypper | 90.7% |
+| internal/pkg/pacman | 90.6% |
+| internal/config | 89.4% |
+| internal/pkg/yum | 87% |
 
 ### 1.5 Key Features
 
