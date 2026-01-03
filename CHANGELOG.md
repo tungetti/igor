@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.0] - 2026-01-03
+
+### Added
+- Pacman package manager implementation for Arch Linux and derivatives
+- Full pkg.Manager interface implementation for Pacman
+- Supports Arch, Manjaro, EndeavourOS, Garuda, Artix
+- Uses pacman -S/-R/-Q with --noconfirm for non-interactive operation
+- Repository management via pacman.conf
+- GPG key management via pacman-key (--recv-keys, --lsign-key)
+- Orphan package removal via pacman -Qdtq
+- 90.6% test coverage
+
 ## [2.5.0] - 2026-01-03
 
 ### Added
