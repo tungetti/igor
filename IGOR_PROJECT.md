@@ -486,7 +486,7 @@ Each sprint must pass these gates before approval:
 | Sprint ID | Title | Status | Version | Dependencies | Effort |
 |-----------|-------|--------|---------|--------------|--------|
 | P1-MS1 | Initialize Go Module and Project Skeleton | `COMPLETED` | 1.1.0 | None | Small |
-| P1-MS2 | Add Core Dependencies | `NOT_STARTED` | 1.2.0 | P1-MS1 | Small |
+| P1-MS2 | Add Core Dependencies | `COMPLETED` | 1.2.0 | P1-MS1 | Small |
 | P1-MS3 | Create Error Types and Constants | `NOT_STARTED` | 1.3.0 | P1-MS1 | Small |
 | P1-MS4 | Implement Logging Infrastructure | `NOT_STARTED` | 1.4.0 | P1-MS2, P1-MS3 | Medium |
 | P1-MS5 | Create Configuration Management System | `NOT_STARTED` | 1.5.0 | P1-MS3, P1-MS4 | Medium |
@@ -1120,6 +1120,44 @@ Additional context
 - All 28 files created as specified
 - Repository pushed to https://github.com/tungetti/igor.git
 - Ready for P1-MS2 (Add Core Dependencies)
+
+---
+
+#### Session 2026-01-03 14:50 - P1-MS2 Implementation
+
+**Sprint:** P1-MS2
+**Version:** 1.2.0
+**Status:** COMPLETED
+
+**Activities:**
+- [x] Delegated implementation to code-implementator agent
+- [x] Added 6 core dependencies to go.mod
+- [x] Created imports_test.go to verify all imports work
+- [x] Code review by code-reviewer agent - APPROVED
+- [x] All tests passed (go mod verify, go build, go test, go vet)
+
+**Dependencies Added:**
+- github.com/charmbracelet/bubbletea v0.25.0
+- github.com/charmbracelet/bubbles v0.18.0
+- github.com/charmbracelet/lipgloss v0.9.1
+- github.com/charmbracelet/log v0.3.1
+- github.com/stretchr/testify v1.8.4
+- gopkg.in/yaml.v3 v3.0.1
+
+**Test Results:**
+- `go mod verify`: all modules verified
+- `go build ./...`: PASS
+- `go test ./...`: PASS
+- `go vet ./...`: PASS
+
+**Human Validation:** APPROVED
+
+**Commits:**
+- `[Phase 1 Sprint 2] Add core dependencies` - v1.2.0
+
+**Notes:**
+- go.sum generated with 65 lines of checksums
+- Ready for P1-MS3 (Create Error Types and Constants)
 
 ---
 
