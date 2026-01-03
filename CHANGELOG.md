@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.0] - 2026-01-03
+
+### Added
+- Package manager factory for automatic distribution detection
+- Factory.Create() auto-detects distribution and returns correct manager
+- Factory.CreateForFamily() for explicit family selection
+- Factory.CreateForDistribution() for precise version-based selection
+- Handles YUM vs DNF for CentOS/RHEL 7 vs 8+
+- Fedora always returns DNF regardless of version
+- AvailableManagers() and SupportedFamilies() helper functions
+- 97% test coverage
+
 ## [2.7.0] - 2026-01-03
 
 ### Added
