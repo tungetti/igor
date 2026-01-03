@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0] - 2026-01-04
+
+### Added
+- PCI device scanner for GPU detection (`internal/gpu/pci`)
+- Scanner interface with ScanAll, ScanByVendor, ScanByClass, ScanNVIDIA methods
+- PCIDevice struct with Address, VendorID, DeviceID, Class, SubVendorID, SubDeviceID, Driver, Revision
+- FileSystem abstraction for testability
+- Helper methods: IsNVIDIA(), IsGPU(), IsNVIDIAGPU(), HasDriver(), IsUsingProprietaryDriver(), IsUsingNouveau(), IsUsingVFIO()
+- Constants for NVIDIA vendor ID (0x10de) and GPU class codes (0300, 0302, 0380)
+- 96.2% test coverage
+- **Phase 3 Started!**
+
 ## [2.9.0] - 2026-01-03
 
 ### Added
