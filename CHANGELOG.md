@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.3.0] - 2026-01-04
+
+### Added
+- nvidia-smi parser for runtime GPU detection (`internal/gpu/smi`)
+- Parser interface with Parse, IsAvailable, GetDriverVersion, GetCUDAVersion, GetGPUCount
+- SMIInfo struct with driver version, CUDA version, and GPU list
+- SMIGPUInfo struct with 13 fields (memory, temperature, power, utilization, etc.)
+- Robust CSV parsing with quoted field handling
+- Error handling for nvidia-smi not found, driver not loaded, no devices
+- Helper methods: MemoryUsagePercent, PowerUsagePercent, IsIdle, TotalMemory
+- Uses exec.Executor for testability
+- 93.7% test coverage
+
 ## [3.2.0] - 2026-01-04
 
 ### Added
