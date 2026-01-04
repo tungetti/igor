@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.8.0] - 2026-01-04
+
+### Added
+- Installation progress view (`internal/ui/views/progress.go`)
+- ProgressModel with spinner, progress bar, and step tracking
+- StepStatus enum: Pending, Running, Complete, Failed, Skipped
+- InstallationStep struct with name, description, status, timing, error
+- buildInstallationSteps generating steps from selected components
+- Progress bar showing overall completion percentage
+- Steps list with status indicators (✓ ● ✗ ○) and duration
+- Log output area showing recent installation messages
+- InstallationStepStart/Complete/Failed messages for step tracking
+- InstallationLogMsg for real-time output display
+- Cancel with Ctrl+C during installation
+- NavigateToCompleteMsg and NavigateToErrorMsg for flow control
+- ProgressKeyMap with help.KeyMap interface
+- 97.8% test coverage
+
 ## [4.7.0] - 2026-01-04
 
 ### Added
