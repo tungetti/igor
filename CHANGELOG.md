@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.1.0] - 2026-01-04
+
+### Added
+- Base TUI application structure (`internal/ui`)
+- Model struct implementing tea.Model interface with ViewState, dimensions, Ready, Quitting, Error
+- ViewState enum: Welcome, Detecting, SystemInfo, DriverSelection, Confirmation, Installing, Complete, Error
+- New() and NewWithContext() constructors with context cancellation support
+- Init() returns tea.EnterAltScreen command
+- Update() handles WindowSizeMsg, KeyMsg, QuitMsg, ErrorMsg, NavigateMsg, WindowReadyMsg
+- View() renders placeholder views for each state
+- KeyMap with vim-style navigation (hjkl) plus arrow keys, implements help.KeyMap interface
+- Message types: QuitMsg, ErrorMsg, NavigateMsg, WindowReadyMsg, TickMsg, StatusMsg, ProgressMsg
+- Command constructors: Navigate(), ReportError(), Quit(), SendProgress(), SendStatus()
+- Helper methods: Context(), Shutdown(), IsReady(), IsQuitting(), NavigateTo()
+- 98.5% test coverage
+- **PHASE 4 STARTED!**
+
 ## [3.7.0] - 2026-01-04
 
 ### Added
