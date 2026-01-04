@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.1.0] - 2026-01-04
+
+### Added
+- Installation workflow interface (`internal/install/`)
+- StepStatus enum: Pending, Running, Completed, Failed, Skipped, RolledBack
+- WorkflowStatus enum: Pending, Running, Completed, Failed, Cancelled, RollingBack, RolledBack
+- Step interface with Name, Description, Execute, Rollback, CanRollback, Validate
+- BaseStep and FuncStep implementations for reusable step creation
+- Workflow interface with Steps, AddStep, Execute, Rollback, OnProgress, Cancel
+- BaseWorkflow implementation with thread-safe state management
+- Context struct with GPU info, distro info, driver version, components
+- Integration with PackageManager, Executor, Privilege, Logger
+- Thread-safe state storage with typed getters (GetStateString, GetStateInt, GetStateBool)
+- Cancellation support via context.Context
+- Dry run mode support
+- Functional options pattern for Context construction
+- Builder pattern for StepResult and WorkflowResult
+- Helper functions: SkipStep, CompleteStep, FailStep
+- 97.2% test coverage
+
 ## [4.11.0] - 2026-01-04
 
 ### Added
