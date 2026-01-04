@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.10.0] - 2026-01-04
+
+### Added
+- Error/help view (`internal/ui/views/error.go`)
+- ErrorModel displaying error screen when installation fails
+- Error banner with X icon and "Installation Failed" title
+- Failed step name and error message display
+- Context-aware troubleshooting tips based on failed step:
+  - blacklist: Nouveau driver tips
+  - update: Network/repository tips
+  - install_*: Disk space/package tips
+  - configure: Permission tips
+  - verify: Driver loading/dmesg tips
+- Two buttons: "Retry" and "Exit"
+- RetryRequestedMsg and ErrorExitRequestedMsg for navigation flow
+- ErrorKeyMap with help.KeyMap interface (enter/r, q/esc, arrows, c for copy)
+- buildTroubleshootingTips function for step-specific help
+- Graceful nil error handling with "Unknown error occurred" fallback
+- 98.2% test coverage
+
 ## [4.9.0] - 2026-01-04
 
 ### Added
