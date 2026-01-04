@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.5.0] - 2026-01-04
+
+### Added
+- Package installation step (`internal/install/steps/packages.go`)
+- PackageInstallationStep implementing install.Step interface
+- Integrates with nvidia.GetPackageSet for distribution-specific packages
+- Supports version-specific driver packages via GetPackagesForVersion
+- Maps component strings to nvidia.Component for package lookup
+- Automatic package deduplication
+- Functional options:
+  - WithAdditionalPackages: Add extra packages beyond computed ones
+  - WithSkipDependencies: Skip dependency checking (placeholder)
+  - WithBatchSize: Install in configurable batches
+  - WithPreInstallHook: Hook before installation
+  - WithPostInstallHook: Hook after installation
+- State keys: StatePackagesInstalled, StateInstalledPackages, StatePackageInstallTime
+- Multi-distro support (Debian, RHEL, Arch, SUSE)
+- Full rollback capability (removes installed packages)
+- Batch installation support with cancellation checks
+- Comprehensive error handling with rollback logging
+- Dry-run mode support
+- Cancellation handling at multiple checkpoints
+- 95.9% test coverage
+
 ## [5.4.0] - 2026-01-04
 
 ### Added
