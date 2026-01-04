@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.6.0] - 2026-01-04
+
+### Added
+- DKMS module build step (`internal/install/steps/dkms.go`)
+- DKMSBuildStep implementing install.Step interface
+- Builds NVIDIA kernel modules using DKMS:
+  - `dkms status nvidia` - Check if module is built
+  - `dkms build nvidia/<version> -k <kernel_version>` - Build module
+  - `dkms install nvidia/<version> -k <kernel_version>` - Install module
+- Functional options:
+  - WithModuleName: Set DKMS module name (default: "nvidia")
+  - WithModuleVersion: Set specific module version
+  - WithModuleVersion: Set specific kernel version
+  - WithSkipStatusCheck: Skip checking if already built
+  - WithKernelDetector: Set kernel detector for testing
+  - WithDKMSTimeout: Set build timeout (default: 10 minutes)
+- State keys: StateDKMSBuilt, StateDKMSModuleName, StateDKMSModuleVersion, StateDKMSKernelVersion, StateDKMSBuildTime
+- Checks if DKMS is available, skips gracefully if not
+- Auto-detects nvidia module version from dkms status
+- Skips if module already built for current kernel
+- Full rollback capability (dkms remove)
+- Input validation for module names, versions, and kernel versions (security)
+- Dry-run mode support
+- Cancellation handling at multiple checkpoints
+- 93.7% test coverage
+
 ## [5.5.0] - 2026-01-04
 
 ### Added
