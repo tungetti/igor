@@ -14,6 +14,7 @@
 6. [Git Workflow](#6-git-workflow)
 7. [Appendices](#7-appendices)
 8. [Glossary](#8-glossary)
+9. [Continuation Prompt](#9-continuation-prompt)
 
 ---
 
@@ -3081,12 +3082,175 @@ timeout: 300  # seconds
 
 | Property | Value |
 |----------|-------|
-| **Document Version** | 3.0.0 |
+| **Document Version** | 4.0.0 |
 | **Created** | 2026-01-03 |
 | **Last Updated** | 2026-01-04 |
 | **Author** | OpenCode Assistant |
 | **Status** | Active |
-| **Next Review** | After Phase 4 completion |
+| **Project Version** | 5.2.0 |
+| **Next Sprint** | P5-MS3 (Repository Configuration Step) |
+
+---
+
+## 9. Continuation Prompt
+
+> **Use this section after context compaction to resume development.**
+
+### Current State (Updated: 2026-01-04)
+
+**Project:** Igor - NVIDIA Driver Installer TUI  
+**Repository:** https://github.com/tungetti/igor.git  
+**Working Directory:** `/home/tommasomariaungetti/Git/igor`  
+**Module:** `github.com/tungetti/igor`  
+**Go Version:** 1.21  
+**Current Version:** 5.2.0
+
+### Progress Summary
+
+| Metric | Value |
+|--------|-------|
+| Total Commits | 39 |
+| Total Tags | 38 (v1.1.0 - v5.2.0) |
+| Phases Complete | 4 of 7 |
+| Sprints Complete | 38 of 62 (61%) |
+
+### Completed Phases
+
+| Phase | Description | Sprints | Status |
+|-------|-------------|---------|--------|
+| Phase 1 | Project Foundation | 9/9 | COMPLETED (v1.1.0-v1.9.0) |
+| Phase 2 | Distribution Detection & Package Manager | 9/9 | COMPLETED (v2.1.0-v2.9.0) |
+| Phase 3 | GPU Detection & System Analysis | 7/7 | COMPLETED (v3.1.0-v3.7.0) |
+| Phase 4 | TUI Framework & Core Views | 11/11 | COMPLETED (v4.1.0-v4.11.0) |
+
+### Current Phase: Phase 5 - Installation Workflow Engine
+
+**Status:** IN_PROGRESS (2 of 11 sprints complete)
+
+| Sprint | Description | Status | Version |
+|--------|-------------|--------|---------|
+| P5-MS1 | Define Installation Workflow Interface | COMPLETED | v5.1.0 |
+| P5-MS2 | Implement Pre-Installation Validation Step | COMPLETED | v5.2.0 |
+| P5-MS3 | Implement Repository Configuration Step | **NEXT** | v5.3.0 |
+| P5-MS4 | Implement Nouveau Blacklist Step | Pending | v5.4.0 |
+| P5-MS5 | Implement Package Installation Step | Pending | v5.5.0 |
+| P5-MS6 | Implement DKMS Module Build Step | Pending | v5.6.0 |
+| P5-MS7 | Implement Module Loading Step | Pending | v5.7.0 |
+| P5-MS8 | Implement X.org Configuration Step | Pending | v5.8.0 |
+| P5-MS9 | Implement Post-Installation Verification Step | Pending | v5.9.0 |
+| P5-MS10 | Implement Workflow Orchestrator | Pending | v5.10.0 |
+| P5-MS11 | Create Distribution-Specific Workflow Builders | Pending | v5.11.0 |
+
+### Sprint Pipeline (MUST FOLLOW)
+
+For each sprint, follow this exact pipeline:
+
+1. **PRE-SPRINT:**
+   - Update VERSION file to new version
+   - Mark sprint as `IN_PROGRESS` in IGOR_PROJECT.md
+
+2. **IMPLEMENT:**
+   - Delegate to `code-implementator` subagent with detailed spec
+   - Include file paths, interfaces, and test requirements
+
+3. **REVIEW:**
+   - Run `go build ./...` and `go vet ./...`
+   - Delegate to `code-reviewer` subagent
+   - Fix any issues found
+
+4. **TEST:**
+   - Run `go test -cover ./...`
+   - Target >85% coverage for new packages
+
+5. **VALIDATE:**
+   - Present summary to human with coverage stats
+   - Wait for explicit "yes" approval
+
+6. **FINALIZE:**
+   - Update CHANGELOG.md with new version entry
+   - Mark sprint as `COMPLETED` in IGOR_PROJECT.md
+   - `git add -A && git commit -m "[Phase X Sprint Y] Description"`
+   - `git tag -a vX.Y.0 -m "vX.Y.0 - Description"`
+   - `git push && git push --tags`
+
+### Key Package Structure
+
+```
+internal/
+├── install/                    # Installation workflow (Phase 5)
+│   ├── types.go               # StepStatus, WorkflowStatus, StepResult
+│   ├── step.go                # Step interface, BaseStep, FuncStep
+│   ├── workflow.go            # Workflow interface, BaseWorkflow
+│   ├── context.go             # Installation context with state
+│   └── steps/                 # Concrete step implementations
+│       └── validation.go      # Pre-installation validation step
+├── ui/                        # TUI framework (Phase 4)
+│   ├── app.go                 # Main model with navigation state machine
+│   ├── messages.go            # Message types
+│   ├── keys.go                # Key bindings
+│   ├── theme/                 # Theme and styles
+│   ├── components/            # Reusable UI components
+│   └── views/                 # Screen views (welcome, detection, etc.)
+├── gpu/                       # GPU detection (Phase 3)
+│   ├── orchestrator.go        # Main GPU orchestrator
+│   ├── pci/                   # PCI device scanning
+│   ├── nvidia/                # NVIDIA model database
+│   ├── smi/                   # nvidia-smi parser
+│   ├── nouveau/               # Nouveau driver detection
+│   ├── kernel/                # Kernel module detection
+│   └── validator/             # System validation checks
+├── pkg/                       # Package managers (Phase 2)
+│   ├── manager.go             # Manager interface
+│   ├── factory/               # Factory for creating managers
+│   ├── apt/, dnf/, yum/       # Distribution-specific managers
+│   ├── pacman/, zypper/
+│   └── nvidia/                # NVIDIA package mappings
+├── distro/                    # Distribution detection
+├── config/                    # Configuration management
+├── logging/                   # Logging interface
+├── exec/                      # Command execution
+├── errors/                    # Custom error types
+├── constants/                 # Project constants
+├── privilege/                 # Privilege escalation
+└── app/                       # Application lifecycle
+```
+
+### Build & Test Commands
+
+```bash
+cd /home/tommasomariaungetti/Git/igor
+
+# Build
+go build ./...
+
+# Vet
+go vet ./...
+
+# Test with coverage
+go test -cover ./...
+
+# Test specific package
+go test -cover ./internal/install/...
+
+# Run
+./igor version
+```
+
+### Resume Instructions
+
+1. Read this file (IGOR_PROJECT.md) to understand current state
+2. Check `cat VERSION` to confirm current version (should be 5.2.0)
+3. Continue with next sprint: **P5-MS3 (Repository Configuration Step)**
+4. Follow the Sprint Pipeline exactly as documented above
+5. After each sprint, get human approval before committing
+
+### Important Notes
+
+- Always get human approval with explicit "yes" before committing
+- Use subagents: `code-implementator` for implementation, `code-reviewer` for review
+- Target >85% test coverage for each package
+- Update CHANGELOG.md after each sprint
+- Follow existing patterns in the codebase
 
 ---
 
