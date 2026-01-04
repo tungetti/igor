@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.2.0] - 2026-01-04
+
+### Added
+- Theme and styling system (`internal/ui/theme`)
+- NVIDIA-inspired color palette with primary green (#76B900)
+- AdaptiveColor support for automatic light/dark terminal detection
+- Three theme variants: DefaultTheme (dark), LightTheme, HighContrastTheme
+- Theme struct with semantic colors (success, warning, error, info)
+- Styles struct with 48 pre-built lipgloss styles for all UI components
+- Helper functions: RenderBox, RenderStatusLine, RenderProgressBar, RenderProgressBarWithLabel
+- RenderKeyValue, RenderGPUCard, RenderButton, RenderDialog, RenderList helpers
+- Styles.Copy(), WithWidth(), WithHeight() for responsive layouts
+- GetTheme() factory and AvailableThemes() for theme discovery
+- 97.4% test coverage
+
 ## [4.1.0] - 2026-01-04
 
 ### Added
