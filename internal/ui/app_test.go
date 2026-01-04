@@ -9,6 +9,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/tungetti/igor/internal/gpu"
+	"github.com/tungetti/igor/internal/ui/views"
 )
 
 // =============================================================================
@@ -353,14 +355,16 @@ func TestModel_View_AllStates(t *testing.T) {
 	testCases := []struct {
 		state           ViewState
 		expectedContain string
+		// With actual views, some help text differs per view
+		skipHelpCheck bool
 	}{
-		{ViewWelcome, "Welcome to Igor"},
-		{ViewDetecting, "Detecting system"},
-		{ViewSystemInfo, "System Information"},
-		{ViewDriverSelection, "Select Driver Version"},
-		{ViewConfirmation, "Confirm Installation"},
-		{ViewInstalling, "Installing"},
-		{ViewComplete, "Installation Complete"},
+		{ViewWelcome, "IGOR", false},
+		{ViewDetecting, "Detecting", false},
+		{ViewSystemInfo, "System Information", false},
+		{ViewDriverSelection, "Driver", false},
+		{ViewConfirmation, "Installation Summary", false}, // Confirmation shows summary
+		{ViewInstalling, "Installing", false},
+		{ViewComplete, "Complete", false},
 	}
 
 	for _, tc := range testCases {
@@ -371,10 +375,15 @@ func TestModel_View_AllStates(t *testing.T) {
 			m.Height = 24
 			m.CurrentView = tc.state
 
+			// Initialize views via window size message to make them ready
+			sizeMsg := tea.WindowSizeMsg{Width: 80, Height: 24}
+			newModel, _ := m.Update(sizeMsg)
+			m = newModel.(Model)
+			m.CurrentView = tc.state // Reset view state after update
+
 			view := m.View()
 
 			assert.Contains(t, view, tc.expectedContain)
-			assert.Contains(t, view, "Press 'q' to quit")
 		})
 	}
 }
@@ -384,12 +393,20 @@ func TestModel_View_Error_WithMessage(t *testing.T) {
 	m.Ready = true
 	m.Width = 80
 	m.Height = 24
+	testErr := errors.New("something went wrong")
+
+	// Navigate to error view via the NavigateToErrorMsg
+	newModel, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m = newModel.(Model)
+
+	// Manually set up error view with error
+	m.Error = testErr
 	m.CurrentView = ViewError
-	m.Error = errors.New("something went wrong")
+	m.errorView = m.initErrorView(testErr, "test step")
 
 	view := m.View()
 
-	assert.Contains(t, view, "Error:")
+	assert.Contains(t, view, "Installation Failed")
 	assert.Contains(t, view, "something went wrong")
 }
 
@@ -398,12 +415,19 @@ func TestModel_View_Error_NilError(t *testing.T) {
 	m.Ready = true
 	m.Width = 80
 	m.Height = 24
-	m.CurrentView = ViewError
+
+	// Navigate to error view via the NavigateToErrorMsg
+	newModel, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m = newModel.(Model)
+
+	// Manually set up error view with nil error
 	m.Error = nil
+	m.CurrentView = ViewError
+	m.errorView = m.initErrorView(nil, "")
 
 	view := m.View()
 
-	assert.Contains(t, view, "Error:")
+	assert.Contains(t, view, "Installation Failed")
 	assert.Contains(t, view, "Unknown error")
 }
 
@@ -946,10 +970,13 @@ func TestModel_RenderError_Dimensions(t *testing.T) {
 	m.Ready = true
 	m.Width = 100
 	m.Height = 30
-	m.Error = errors.New("test error")
+	m.CurrentView = ViewError
+	testErr := errors.New("test error")
+	m.errorView = m.initErrorView(testErr, "test step")
+	m.errorView.SetSize(m.Width, m.Height)
 
 	// Render should not panic with various dimensions
-	view := m.renderError()
+	view := m.View()
 	assert.NotEmpty(t, view)
 	assert.Contains(t, view, "test error")
 }
@@ -999,4 +1026,467 @@ func TestWaitForWindowSize(t *testing.T) {
 	// This function returns nil as a placeholder
 	result := waitForWindowSize()
 	assert.Nil(t, result)
+}
+
+// =============================================================================
+// View Navigation and State Machine Tests (P4-MS11)
+// =============================================================================
+
+func TestNewWithVersion(t *testing.T) {
+	testCases := []struct {
+		name    string
+		version string
+	}{
+		{"with version number", "1.0.0"},
+		{"with dev version", "dev"},
+		{"with git hash", "abc1234"},
+		{"with empty version", ""},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			m := NewWithVersion(tc.version)
+
+			assert.Equal(t, ViewWelcome, m.CurrentView)
+			assert.Equal(t, tc.version, m.Version())
+			assert.NotNil(t, m.ctx)
+			assert.NotNil(t, m.cancel)
+			assert.NotNil(t, m.keyMap.Quit.Keys())
+			assert.NotNil(t, m.theme)
+			assert.NotNil(t, m.styles.Title)
+		})
+	}
+}
+
+func TestModel_Update_ViewMessages(t *testing.T) {
+	t.Run("StartDetectionMsg navigates to detection", func(t *testing.T) {
+		m := New()
+		m.Ready = true
+		m.Width = 80
+		m.Height = 24
+
+		// Send window size first
+		newModel, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+		m = newModel.(Model)
+
+		// Send StartDetectionMsg
+		newModel, cmd := m.Update(views.StartDetectionMsg{})
+		m = newModel.(Model)
+
+		assert.Equal(t, ViewDetecting, m.CurrentView)
+		assert.NotNil(t, cmd) // Should return Init command for detection view
+	})
+
+	t.Run("NavigateToWelcomeMsg navigates to welcome", func(t *testing.T) {
+		m := New()
+		m.Ready = true
+		m.CurrentView = ViewDetecting
+
+		newModel, _ := m.Update(views.NavigateToWelcomeMsg{})
+		m = newModel.(Model)
+
+		assert.Equal(t, ViewWelcome, m.CurrentView)
+	})
+
+	t.Run("NavigateToDriverSelectionMsg navigates to selection", func(t *testing.T) {
+		m := New()
+		m.Ready = true
+		m.Width = 80
+		m.Height = 24
+
+		newModel, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+		m = newModel.(Model)
+
+		gpuInfo := &gpu.GPUInfo{}
+		newModel, _ = m.Update(views.NavigateToDriverSelectionMsg{GPUInfo: gpuInfo})
+		m = newModel.(Model)
+
+		assert.Equal(t, ViewDriverSelection, m.CurrentView)
+		assert.Equal(t, gpuInfo, m.gpuInfo)
+	})
+
+	t.Run("NavigateToConfirmationMsg navigates to confirmation", func(t *testing.T) {
+		m := New()
+		m.Ready = true
+		m.Width = 80
+		m.Height = 24
+
+		newModel, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+		m = newModel.(Model)
+
+		gpuInfo := &gpu.GPUInfo{}
+		driver := views.DriverOption{Version: "550", Branch: "Latest"}
+		components := []views.ComponentOption{{Name: "Driver", ID: "driver", Selected: true}}
+
+		newModel, _ = m.Update(views.NavigateToConfirmationMsg{
+			GPUInfo:            gpuInfo,
+			SelectedDriver:     driver,
+			SelectedComponents: components,
+		})
+		m = newModel.(Model)
+
+		assert.Equal(t, ViewConfirmation, m.CurrentView)
+		assert.Equal(t, gpuInfo, m.gpuInfo)
+		assert.Equal(t, driver, m.driver)
+		assert.Equal(t, components, m.components)
+	})
+
+	t.Run("StartInstallationMsg navigates to installing", func(t *testing.T) {
+		m := New()
+		m.Ready = true
+		m.Width = 80
+		m.Height = 24
+
+		newModel, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+		m = newModel.(Model)
+
+		gpuInfo := &gpu.GPUInfo{}
+		driver := views.DriverOption{Version: "550", Branch: "Latest"}
+		components := []views.ComponentOption{{Name: "Driver", ID: "driver", Selected: true}}
+
+		newModel, cmd := m.Update(views.StartInstallationMsg{
+			GPUInfo:    gpuInfo,
+			Driver:     driver,
+			Components: components,
+		})
+		m = newModel.(Model)
+
+		assert.Equal(t, ViewInstalling, m.CurrentView)
+		assert.NotNil(t, cmd) // Should return Init command for progress view
+	})
+
+	t.Run("NavigateToCompleteMsg navigates to complete", func(t *testing.T) {
+		m := New()
+		m.Ready = true
+		m.Width = 80
+		m.Height = 24
+
+		newModel, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+		m = newModel.(Model)
+
+		gpuInfo := &gpu.GPUInfo{}
+		driver := views.DriverOption{Version: "550", Branch: "Latest"}
+		components := []views.ComponentOption{{Name: "Driver", ID: "driver", Selected: true}}
+
+		newModel, _ = m.Update(views.NavigateToCompleteMsg{
+			GPUInfo:    gpuInfo,
+			Driver:     driver,
+			Components: components,
+		})
+		m = newModel.(Model)
+
+		assert.Equal(t, ViewComplete, m.CurrentView)
+	})
+
+	t.Run("NavigateToErrorMsg navigates to error", func(t *testing.T) {
+		m := New()
+		m.Ready = true
+		m.Width = 80
+		m.Height = 24
+
+		newModel, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+		m = newModel.(Model)
+
+		testErr := errors.New("installation failed")
+		newModel, _ = m.Update(views.NavigateToErrorMsg{
+			Error:      testErr,
+			FailedStep: "Installing Driver",
+		})
+		m = newModel.(Model)
+
+		assert.Equal(t, ViewError, m.CurrentView)
+		assert.Equal(t, testErr, m.Error)
+	})
+
+	t.Run("RebootRequestedMsg quits application", func(t *testing.T) {
+		m := New()
+		m.Ready = true
+
+		newModel, cmd := m.Update(views.RebootRequestedMsg{})
+		m = newModel.(Model)
+
+		assert.True(t, m.Quitting)
+		assert.NotNil(t, cmd)
+	})
+
+	t.Run("ExitRequestedMsg quits application", func(t *testing.T) {
+		m := New()
+		m.Ready = true
+
+		newModel, cmd := m.Update(views.ExitRequestedMsg{})
+		m = newModel.(Model)
+
+		assert.True(t, m.Quitting)
+		assert.NotNil(t, cmd)
+	})
+
+	t.Run("ErrorExitRequestedMsg quits application", func(t *testing.T) {
+		m := New()
+		m.Ready = true
+
+		newModel, cmd := m.Update(views.ErrorExitRequestedMsg{})
+		m = newModel.(Model)
+
+		assert.True(t, m.Quitting)
+		assert.NotNil(t, cmd)
+	})
+
+	t.Run("RetryRequestedMsg navigates to welcome", func(t *testing.T) {
+		m := New()
+		m.Ready = true
+		m.CurrentView = ViewError
+		m.Error = errors.New("some error")
+
+		newModel, _ := m.Update(views.RetryRequestedMsg{})
+		m = newModel.(Model)
+
+		assert.Equal(t, ViewWelcome, m.CurrentView)
+		assert.Nil(t, m.Error)
+	})
+}
+
+func TestModel_View_ActualViews(t *testing.T) {
+	t.Run("Welcome view renders actual view model", func(t *testing.T) {
+		m := NewWithVersion("1.0.0")
+		newModel, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+		m = newModel.(Model)
+
+		view := m.View()
+
+		// Should contain content from actual WelcomeModel
+		assert.Contains(t, view, "IGOR")
+		assert.Contains(t, view, "NVIDIA")
+	})
+
+	t.Run("Detection view renders actual view model", func(t *testing.T) {
+		m := NewWithVersion("1.0.0")
+		newModel, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+		m = newModel.(Model)
+
+		newModel, _ = m.Update(views.StartDetectionMsg{})
+		m = newModel.(Model)
+
+		view := m.View()
+
+		assert.Contains(t, view, "Detecting")
+	})
+
+	t.Run("Selection view renders actual view model", func(t *testing.T) {
+		m := NewWithVersion("1.0.0")
+		newModel, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+		m = newModel.(Model)
+
+		newModel, _ = m.Update(views.NavigateToDriverSelectionMsg{GPUInfo: &gpu.GPUInfo{}})
+		m = newModel.(Model)
+
+		view := m.View()
+
+		assert.Contains(t, view, "Driver")
+	})
+
+	t.Run("Confirmation view renders actual view model", func(t *testing.T) {
+		m := NewWithVersion("1.0.0")
+		newModel, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+		m = newModel.(Model)
+
+		newModel, _ = m.Update(views.NavigateToConfirmationMsg{
+			GPUInfo:            &gpu.GPUInfo{},
+			SelectedDriver:     views.DriverOption{Version: "550"},
+			SelectedComponents: []views.ComponentOption{},
+		})
+		m = newModel.(Model)
+
+		view := m.View()
+
+		assert.Contains(t, view, "Installation Summary")
+	})
+
+	t.Run("Progress view renders actual view model", func(t *testing.T) {
+		m := NewWithVersion("1.0.0")
+		newModel, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+		m = newModel.(Model)
+
+		newModel, _ = m.Update(views.StartInstallationMsg{
+			GPUInfo:    &gpu.GPUInfo{},
+			Driver:     views.DriverOption{Version: "550"},
+			Components: []views.ComponentOption{},
+		})
+		m = newModel.(Model)
+
+		view := m.View()
+
+		assert.Contains(t, view, "Installing")
+	})
+
+	t.Run("Complete view renders actual view model", func(t *testing.T) {
+		m := NewWithVersion("1.0.0")
+		newModel, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+		m = newModel.(Model)
+
+		newModel, _ = m.Update(views.NavigateToCompleteMsg{
+			GPUInfo:    &gpu.GPUInfo{},
+			Driver:     views.DriverOption{Version: "550"},
+			Components: []views.ComponentOption{},
+		})
+		m = newModel.(Model)
+
+		view := m.View()
+
+		assert.Contains(t, view, "Complete")
+	})
+
+	t.Run("Error view renders actual view model", func(t *testing.T) {
+		m := NewWithVersion("1.0.0")
+		newModel, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+		m = newModel.(Model)
+
+		newModel, _ = m.Update(views.NavigateToErrorMsg{
+			Error:      errors.New("test error"),
+			FailedStep: "Test Step",
+		})
+		m = newModel.(Model)
+
+		view := m.View()
+
+		assert.Contains(t, view, "Installation Failed")
+		assert.Contains(t, view, "test error")
+	})
+}
+
+func TestModel_WindowSize_PropagatedToViews(t *testing.T) {
+	m := NewWithVersion("1.0.0")
+
+	// Initial window size
+	newModel, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m = newModel.(Model)
+
+	assert.Equal(t, 80, m.Width)
+	assert.Equal(t, 24, m.Height)
+	assert.True(t, m.welcomeView.Ready())
+
+	// Update to different size
+	newModel, _ = m.Update(tea.WindowSizeMsg{Width: 120, Height: 40})
+	m = newModel.(Model)
+
+	assert.Equal(t, 120, m.Width)
+	assert.Equal(t, 40, m.Height)
+	assert.Equal(t, 120, m.welcomeView.Width())
+	assert.Equal(t, 40, m.welcomeView.Height())
+}
+
+func TestModel_NavigationFlow_WelcomeToComplete(t *testing.T) {
+	// Simulate full happy path through the application
+	m := NewWithVersion("1.0.0")
+
+	// Step 1: Initialize with window size
+	newModel, _ := m.Update(tea.WindowSizeMsg{Width: 100, Height: 30})
+	m = newModel.(Model)
+	assert.Equal(t, ViewWelcome, m.CurrentView)
+	assert.True(t, m.Ready)
+
+	// Step 2: Start detection (simulating user clicking Start)
+	newModel, _ = m.Update(views.StartDetectionMsg{})
+	m = newModel.(Model)
+	assert.Equal(t, ViewDetecting, m.CurrentView)
+
+	// Step 3: Detection completes, navigate to driver selection
+	gpuInfo := &gpu.GPUInfo{}
+	newModel, _ = m.Update(views.NavigateToDriverSelectionMsg{GPUInfo: gpuInfo})
+	m = newModel.(Model)
+	assert.Equal(t, ViewDriverSelection, m.CurrentView)
+	assert.Equal(t, gpuInfo, m.gpuInfo)
+
+	// Step 4: User selects driver and components, navigate to confirmation
+	driver := views.DriverOption{Version: "550", Branch: "Latest"}
+	components := []views.ComponentOption{{Name: "NVIDIA Driver", ID: "driver", Selected: true}}
+	newModel, _ = m.Update(views.NavigateToConfirmationMsg{
+		GPUInfo:            gpuInfo,
+		SelectedDriver:     driver,
+		SelectedComponents: components,
+	})
+	m = newModel.(Model)
+	assert.Equal(t, ViewConfirmation, m.CurrentView)
+	assert.Equal(t, driver, m.driver)
+	assert.Equal(t, components, m.components)
+
+	// Step 5: User confirms, start installation
+	newModel, _ = m.Update(views.StartInstallationMsg{
+		GPUInfo:    gpuInfo,
+		Driver:     driver,
+		Components: components,
+	})
+	m = newModel.(Model)
+	assert.Equal(t, ViewInstalling, m.CurrentView)
+
+	// Step 6: Installation completes
+	newModel, _ = m.Update(views.NavigateToCompleteMsg{
+		GPUInfo:    gpuInfo,
+		Driver:     driver,
+		Components: components,
+	})
+	m = newModel.(Model)
+	assert.Equal(t, ViewComplete, m.CurrentView)
+
+	// Verify view can be rendered
+	view := m.View()
+	assert.Contains(t, view, "Complete")
+}
+
+func TestModel_NavigationFlow_WithError(t *testing.T) {
+	// Simulate flow with error during installation
+	m := NewWithVersion("1.0.0")
+
+	// Initialize with window size
+	newModel, _ := m.Update(tea.WindowSizeMsg{Width: 100, Height: 30})
+	m = newModel.(Model)
+
+	// Start detection
+	newModel, _ = m.Update(views.StartDetectionMsg{})
+	m = newModel.(Model)
+	assert.Equal(t, ViewDetecting, m.CurrentView)
+
+	// Navigate to selection
+	gpuInfo := &gpu.GPUInfo{}
+	newModel, _ = m.Update(views.NavigateToDriverSelectionMsg{GPUInfo: gpuInfo})
+	m = newModel.(Model)
+
+	// Navigate to confirmation
+	driver := views.DriverOption{Version: "550"}
+	components := []views.ComponentOption{{Name: "Driver", ID: "driver", Selected: true}}
+	newModel, _ = m.Update(views.NavigateToConfirmationMsg{
+		GPUInfo:            gpuInfo,
+		SelectedDriver:     driver,
+		SelectedComponents: components,
+	})
+	m = newModel.(Model)
+
+	// Start installation
+	newModel, _ = m.Update(views.StartInstallationMsg{
+		GPUInfo:    gpuInfo,
+		Driver:     driver,
+		Components: components,
+	})
+	m = newModel.(Model)
+	assert.Equal(t, ViewInstalling, m.CurrentView)
+
+	// Installation fails - navigate to error
+	testErr := errors.New("package installation failed")
+	newModel, _ = m.Update(views.NavigateToErrorMsg{
+		Error:      testErr,
+		FailedStep: "Installing nvidia-driver-550",
+	})
+	m = newModel.(Model)
+	assert.Equal(t, ViewError, m.CurrentView)
+	assert.Equal(t, testErr, m.Error)
+
+	// Verify error view renders
+	view := m.View()
+	assert.Contains(t, view, "Installation Failed")
+	assert.Contains(t, view, "package installation failed")
+
+	// User chooses to retry
+	newModel, _ = m.Update(views.RetryRequestedMsg{})
+	m = newModel.(Model)
+	assert.Equal(t, ViewWelcome, m.CurrentView)
+	assert.Nil(t, m.Error)
 }

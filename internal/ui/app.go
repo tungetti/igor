@@ -6,8 +6,12 @@ package ui
 import (
 	"context"
 
+	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/tungetti/igor/internal/gpu"
+	"github.com/tungetti/igor/internal/ui/theme"
+	"github.com/tungetti/igor/internal/ui/views"
 )
 
 // ViewState represents the current view in the application.
@@ -82,31 +86,71 @@ type Model struct {
 	// keyMap holds the key bindings.
 	keyMap KeyMap
 
-	// Sub-models (will be added in later sprints)
-	// welcomeModel    *WelcomeModel
-	// detectionModel  *DetectionModel
-	// etc.
+	// Theme and styles
+	theme  *theme.Theme
+	styles theme.Styles
+
+	// Version string
+	version string
+
+	// View models (initialized lazily or on navigation)
+	welcomeView      views.WelcomeModel
+	detectionView    views.DetectionModel
+	selectionView    views.SelectionModel
+	confirmationView views.ConfirmationModel
+	progressView     views.ProgressModel
+	completeView     views.CompleteModel
+	errorView        views.ErrorModel
+
+	// Shared state passed between views
+	gpuInfo    *gpu.GPUInfo
+	driver     views.DriverOption
+	components []views.ComponentOption
 }
 
 // New creates a new TUI application model.
 func New() Model {
+	return NewWithVersion("dev")
+}
+
+// NewWithVersion creates a new TUI application model with a specified version.
+func NewWithVersion(version string) Model {
 	ctx, cancel := context.WithCancel(context.Background())
+	t := theme.DefaultTheme()
+	s := theme.NewStyles(t)
+
 	return Model{
 		CurrentView: ViewWelcome,
 		ctx:         ctx,
 		cancel:      cancel,
 		keyMap:      DefaultKeyMap(),
+		theme:       t,
+		styles:      s,
+		version:     version,
+		welcomeView: views.NewWelcome(s, version),
 	}
 }
 
 // NewWithContext creates a new TUI application model with a custom context.
 func NewWithContext(ctx context.Context) Model {
+	return NewWithContextAndVersion(ctx, "dev")
+}
+
+// NewWithContextAndVersion creates a new TUI application model with a custom context and version.
+func NewWithContextAndVersion(ctx context.Context, version string) Model {
 	childCtx, cancel := context.WithCancel(ctx)
+	t := theme.DefaultTheme()
+	s := theme.NewStyles(t)
+
 	return Model{
 		CurrentView: ViewWelcome,
 		ctx:         childCtx,
 		cancel:      cancel,
 		keyMap:      DefaultKeyMap(),
+		theme:       t,
+		styles:      s,
+		version:     version,
+		welcomeView: views.NewWelcome(s, version),
 	}
 }
 
@@ -120,6 +164,8 @@ func (m Model) Init() tea.Cmd {
 
 // Update implements tea.Model.
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmds []tea.Cmd
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		return m.handleKeyPress(msg)
@@ -128,7 +174,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.Width = msg.Width
 		m.Height = msg.Height
 		m.Ready = true
-		return m, nil
+		// Propagate window size to all initialized views
+		m.propagateWindowSize(msg)
+		return m, tea.Batch(cmds...)
 
 	case QuitMsg:
 		m.Quitting = true
@@ -149,9 +197,109 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.Height = msg.Height
 		m.Ready = true
 		return m, nil
+
+	// View navigation messages from views package
+	case views.StartDetectionMsg:
+		m.CurrentView = ViewDetecting
+		m.detectionView = m.initDetectionView()
+		return m, m.detectionView.Init()
+
+	case views.DetectionCompleteMsg:
+		m.gpuInfo = msg.GPUInfo
+		m.CurrentView = ViewDriverSelection
+		m.selectionView = m.initSelectionView(msg.GPUInfo)
+		sizeMsg := tea.WindowSizeMsg{Width: m.Width, Height: m.Height}
+		m.selectionView.SetSize(sizeMsg.Width, sizeMsg.Height)
+		return m, nil
+
+	case views.NavigateToDriverSelectionMsg:
+		m.gpuInfo = msg.GPUInfo
+		m.CurrentView = ViewDriverSelection
+		m.selectionView = m.initSelectionView(msg.GPUInfo)
+		sizeMsg := tea.WindowSizeMsg{Width: m.Width, Height: m.Height}
+		m.selectionView.SetSize(sizeMsg.Width, sizeMsg.Height)
+		return m, nil
+
+	case views.NavigateToWelcomeMsg:
+		m.CurrentView = ViewWelcome
+		return m, nil
+
+	case views.NavigateToDetectionMsg:
+		m.CurrentView = ViewDetecting
+		m.detectionView = m.initDetectionView()
+		return m, m.detectionView.Init()
+
+	case views.NavigateToConfirmationMsg:
+		m.gpuInfo = msg.GPUInfo
+		m.driver = msg.SelectedDriver
+		m.components = msg.SelectedComponents
+		m.CurrentView = ViewConfirmation
+		m.confirmationView = m.initConfirmationView(msg.GPUInfo, msg.SelectedDriver, msg.SelectedComponents)
+		sizeMsg := tea.WindowSizeMsg{Width: m.Width, Height: m.Height}
+		m.confirmationView.SetSize(sizeMsg.Width, sizeMsg.Height)
+		return m, nil
+
+	case views.NavigateBackToSelectionMsg:
+		m.CurrentView = ViewDriverSelection
+		// Re-use existing selection view if available
+		sizeMsg := tea.WindowSizeMsg{Width: m.Width, Height: m.Height}
+		m.selectionView.SetSize(sizeMsg.Width, sizeMsg.Height)
+		return m, nil
+
+	case views.StartInstallationMsg:
+		m.gpuInfo = msg.GPUInfo
+		m.driver = msg.Driver
+		m.components = msg.Components
+		m.CurrentView = ViewInstalling
+		m.progressView = m.initProgressView(msg.GPUInfo, msg.Driver, msg.Components)
+		return m, m.progressView.Init()
+
+	case views.NavigateToCompleteMsg:
+		m.gpuInfo = msg.GPUInfo
+		m.driver = msg.Driver
+		m.components = msg.Components
+		m.CurrentView = ViewComplete
+		m.completeView = m.initCompleteView(msg.GPUInfo, msg.Driver, msg.Components)
+		sizeMsg := tea.WindowSizeMsg{Width: m.Width, Height: m.Height}
+		m.completeView.SetSize(sizeMsg.Width, sizeMsg.Height)
+		return m, nil
+
+	case views.NavigateToErrorMsg:
+		m.Error = msg.Error
+		m.CurrentView = ViewError
+		m.errorView = m.initErrorView(msg.Error, msg.FailedStep)
+		sizeMsg := tea.WindowSizeMsg{Width: m.Width, Height: m.Height}
+		m.errorView.SetSize(sizeMsg.Width, sizeMsg.Height)
+		return m, nil
+
+	case views.RebootRequestedMsg:
+		// For now, just quit. In a full implementation, this would trigger a reboot.
+		m.Quitting = true
+		m.cancel()
+		return m, tea.Quit
+
+	case views.ExitRequestedMsg:
+		m.Quitting = true
+		m.cancel()
+		return m, tea.Quit
+
+	case views.ErrorExitRequestedMsg:
+		m.Quitting = true
+		m.cancel()
+		return m, tea.Quit
+
+	case views.RetryRequestedMsg:
+		m.CurrentView = ViewWelcome
+		m.Error = nil
+		return m, nil
+
+	// Spinner tick messages for animation
+	case spinner.TickMsg:
+		return m.handleSpinnerTick(msg)
 	}
 
-	return m, nil
+	// Delegate to active view's Update for view-specific handling
+	return m.delegateToActiveView(msg)
 }
 
 // View implements tea.Model.
@@ -164,24 +312,24 @@ func (m Model) View() string {
 		return "Initializing..."
 	}
 
-	// Placeholder views - will be replaced by actual view models
+	// Render actual view models
 	switch m.CurrentView {
 	case ViewWelcome:
-		return m.renderPlaceholder("Welcome to Igor - NVIDIA Driver Installer")
+		return m.welcomeView.View()
 	case ViewDetecting:
-		return m.renderPlaceholder("Detecting system...")
+		return m.detectionView.View()
 	case ViewSystemInfo:
 		return m.renderPlaceholder("System Information")
 	case ViewDriverSelection:
-		return m.renderPlaceholder("Select Driver Version")
+		return m.selectionView.View()
 	case ViewConfirmation:
-		return m.renderPlaceholder("Confirm Installation")
+		return m.confirmationView.View()
 	case ViewInstalling:
-		return m.renderPlaceholder("Installing...")
+		return m.progressView.View()
 	case ViewComplete:
-		return m.renderPlaceholder("Installation Complete")
+		return m.completeView.View()
 	case ViewError:
-		return m.renderError()
+		return m.errorView.View()
 	default:
 		return m.renderPlaceholder("Unknown View")
 	}
@@ -204,31 +352,6 @@ func (m Model) renderPlaceholder(title string) string {
 
 	content := titleStyle.Render(title) + "\n\n" +
 		helpStyle.Render("Press 'q' to quit, '?' for help")
-
-	return style.Render(content)
-}
-
-// renderError renders the error view.
-func (m Model) renderError() string {
-	errMsg := "Unknown error"
-	if m.Error != nil {
-		errMsg = m.Error.Error()
-	}
-
-	style := lipgloss.NewStyle().
-		Width(m.Width).
-		Height(m.Height).
-		Align(lipgloss.Center, lipgloss.Center)
-
-	errStyle := lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("196"))
-
-	helpStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("241"))
-
-	content := errStyle.Render("Error: "+errMsg) + "\n\n" +
-		helpStyle.Render("Press 'q' to quit, 'esc' to go back")
 
 	return style.Render(content)
 }
@@ -306,4 +429,150 @@ func (m *Model) ClearError() {
 // NavigateTo transitions to the specified view.
 func (m *Model) NavigateTo(view ViewState) {
 	m.CurrentView = view
+}
+
+// Version returns the application version.
+func (m Model) Version() string {
+	return m.version
+}
+
+// =============================================================================
+// View Initialization Helpers
+// =============================================================================
+
+// initDetectionView creates and initializes the detection view.
+func (m Model) initDetectionView() views.DetectionModel {
+	view := views.NewDetection(m.styles, m.version)
+	view.SetSize(m.Width, m.Height)
+	return view
+}
+
+// initSelectionView creates and initializes the selection view with GPU info.
+func (m Model) initSelectionView(gpuInfo *gpu.GPUInfo) views.SelectionModel {
+	view := views.NewSelection(m.styles, m.version, gpuInfo)
+	view.SetSize(m.Width, m.Height)
+	return view
+}
+
+// initConfirmationView creates and initializes the confirmation view.
+func (m Model) initConfirmationView(gpuInfo *gpu.GPUInfo, driver views.DriverOption, components []views.ComponentOption) views.ConfirmationModel {
+	view := views.NewConfirmation(m.styles, m.version, gpuInfo, driver, components)
+	view.SetSize(m.Width, m.Height)
+	return view
+}
+
+// initProgressView creates and initializes the progress view.
+func (m Model) initProgressView(gpuInfo *gpu.GPUInfo, driver views.DriverOption, components []views.ComponentOption) views.ProgressModel {
+	view := views.NewProgress(m.styles, m.version, gpuInfo, driver, components)
+	view.SetSize(m.Width, m.Height)
+	return view
+}
+
+// initCompleteView creates and initializes the complete view.
+func (m Model) initCompleteView(gpuInfo *gpu.GPUInfo, driver views.DriverOption, components []views.ComponentOption) views.CompleteModel {
+	view := views.NewComplete(m.styles, m.version, gpuInfo, driver, components)
+	view.SetSize(m.Width, m.Height)
+	return view
+}
+
+// initErrorView creates and initializes the error view.
+func (m Model) initErrorView(err error, failedStep string) views.ErrorModel {
+	view := views.NewError(m.styles, m.version, err, failedStep)
+	view.SetSize(m.Width, m.Height)
+	return view
+}
+
+// =============================================================================
+// Window Size Propagation
+// =============================================================================
+
+// propagateWindowSize propagates window size to all initialized views.
+// Views are updated directly; no commands are returned as SetSize is synchronous.
+func (m *Model) propagateWindowSize(msg tea.WindowSizeMsg) {
+	// Update welcome view (always initialized)
+	m.welcomeView.SetSize(msg.Width, msg.Height)
+
+	// Update detection view if initialized
+	if m.detectionView.Ready() || m.CurrentView == ViewDetecting {
+		m.detectionView.SetSize(msg.Width, msg.Height)
+	}
+
+	// Update selection view if initialized
+	if m.selectionView.Ready() || m.CurrentView == ViewDriverSelection {
+		m.selectionView.SetSize(msg.Width, msg.Height)
+	}
+
+	// Update confirmation view if initialized
+	if m.confirmationView.Ready() || m.CurrentView == ViewConfirmation {
+		m.confirmationView.SetSize(msg.Width, msg.Height)
+	}
+
+	// Update progress view if initialized
+	if m.progressView.Ready() || m.CurrentView == ViewInstalling {
+		m.progressView.SetSize(msg.Width, msg.Height)
+	}
+
+	// Update complete view if initialized
+	if m.completeView.Ready() || m.CurrentView == ViewComplete {
+		m.completeView.SetSize(msg.Width, msg.Height)
+	}
+
+	// Update error view if initialized
+	if m.errorView.Ready() || m.CurrentView == ViewError {
+		m.errorView.SetSize(msg.Width, msg.Height)
+	}
+}
+
+// =============================================================================
+// Spinner and View Delegation
+// =============================================================================
+
+// handleSpinnerTick handles spinner tick messages by delegating to the active view.
+func (m Model) handleSpinnerTick(msg spinner.TickMsg) (tea.Model, tea.Cmd) {
+	switch m.CurrentView {
+	case ViewDetecting:
+		var cmd tea.Cmd
+		m.detectionView, cmd = m.detectionView.Update(msg)
+		return m, cmd
+	case ViewInstalling:
+		var cmd tea.Cmd
+		m.progressView, cmd = m.progressView.Update(msg)
+		return m, cmd
+	}
+	return m, nil
+}
+
+// delegateToActiveView delegates messages to the currently active view.
+func (m Model) delegateToActiveView(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch m.CurrentView {
+	case ViewWelcome:
+		var cmd tea.Cmd
+		m.welcomeView, cmd = m.welcomeView.Update(msg)
+		return m, cmd
+	case ViewDetecting:
+		var cmd tea.Cmd
+		m.detectionView, cmd = m.detectionView.Update(msg)
+		return m, cmd
+	case ViewDriverSelection:
+		var cmd tea.Cmd
+		m.selectionView, cmd = m.selectionView.Update(msg)
+		return m, cmd
+	case ViewConfirmation:
+		var cmd tea.Cmd
+		m.confirmationView, cmd = m.confirmationView.Update(msg)
+		return m, cmd
+	case ViewInstalling:
+		var cmd tea.Cmd
+		m.progressView, cmd = m.progressView.Update(msg)
+		return m, cmd
+	case ViewComplete:
+		var cmd tea.Cmd
+		m.completeView, cmd = m.completeView.Update(msg)
+		return m, cmd
+	case ViewError:
+		var cmd tea.Cmd
+		m.errorView, cmd = m.errorView.Update(msg)
+		return m, cmd
+	}
+	return m, nil
 }

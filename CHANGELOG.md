@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.11.0] - 2026-01-04
+
+### Added
+- View navigation and state machine (`internal/ui/app.go`)
+- Full integration of all view models (welcome, detection, selection, confirmation, progress, complete, error)
+- Navigation state machine handling all view transitions
+- View initialization helpers for lazy view creation
+- Window size propagation to all initialized views
+- Spinner tick delegation to active view (detection, progress)
+- NewWithVersion and NewWithContextAndVersion constructors
+- Shared state management (gpuInfo, driver, components) between views
+- Complete navigation flow: Welcome → Detection → Selection → Confirmation → Progress → Complete/Error
+- 83.3% test coverage for ui package
+
+### Changed
+- Model struct now includes theme, styles, version, and all view models
+- Update method handles all view-specific navigation messages
+- View method renders actual view models instead of placeholders
+
+### Removed
+- Deprecated renderError method (replaced by ErrorModel view)
+
 ## [4.10.0] - 2026-01-04
 
 ### Added
