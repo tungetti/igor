@@ -3330,7 +3330,11 @@ internal/
 │   ├── workflow.go            # Workflow interface, BaseWorkflow
 │   ├── context.go             # Installation context with state
 │   └── steps/                 # Concrete step implementations
-│       └── validation.go      # Pre-installation validation step
+│       ├── validation.go      # Pre-installation validation step
+│       ├── repository.go      # Repository configuration step
+│       ├── nouveau.go         # Nouveau blacklist step
+│       ├── packages.go        # Package installation step
+│       └── dkms.go            # DKMS module build step
 ├── ui/                        # TUI framework (Phase 4)
 │   ├── app.go                 # Main model with navigation state machine
 │   ├── messages.go            # Message types
@@ -3398,6 +3402,63 @@ go test -cover ./internal/install/...
 - Target >85% test coverage for each package
 - Update CHANGELOG.md after each sprint
 - Follow existing patterns in the codebase
+
+### Implemented Steps Reference (for patterns)
+
+Each step follows the same pattern. Use these as reference when implementing new steps:
+
+1. **ValidationStep** (`validation.go`) - Validates system requirements
+2. **RepositoryStep** (`repository.go`) - Configures NVIDIA repositories
+3. **NouveauBlacklistStep** (`nouveau.go`) - Blacklists Nouveau driver, regenerates initramfs
+4. **PackageInstallationStep** (`packages.go`) - Installs NVIDIA packages via package manager
+5. **DKMSBuildStep** (`dkms.go`) - Builds kernel modules via DKMS
+
+**Common Step Pattern:**
+```go
+// State keys
+const (
+    State<Step>Done = "<step>_done"
+    // ... other state keys
+)
+
+// Step struct
+type <Step>Step struct {
+    install.BaseStep
+    // step-specific fields
+}
+
+// Functional options
+type <Step>StepOption func(*<Step>Step)
+func With<Option>(...) <Step>StepOption { ... }
+
+// Constructor
+func New<Step>Step(opts ...<Step>StepOption) *<Step>Step { ... }
+
+// Execute - main logic with cancellation checks, dry-run, state storage
+func (s *<Step>Step) Execute(ctx *install.Context) install.StepResult { ... }
+
+// Rollback - undo changes
+func (s *<Step>Step) Rollback(ctx *install.Context) error { ... }
+
+// Validate - check prerequisites
+func (s *<Step>Step) Validate(ctx *install.Context) error { ... }
+
+// CanRollback - usually returns true
+func (s *<Step>Step) CanRollback() bool { return true }
+
+// Interface compliance
+var _ install.Step = (*<Step>Step)(nil)
+```
+
+### Remaining Phase 5 Sprints
+
+| Sprint | Description | Key Details |
+|--------|-------------|-------------|
+| P5-MS7 | Module Loading Step | Load nvidia kernel module via `modprobe nvidia`, unload via `modprobe -r nvidia` |
+| P5-MS8 | X.org Configuration Step | Configure `/etc/X11/xorg.conf.d/` for NVIDIA, handle Wayland |
+| P5-MS9 | Post-Installation Verification | Verify driver via `nvidia-smi`, check module loaded, validate X.org |
+| P5-MS10 | Workflow Orchestrator | Execute steps in order, handle rollback on failure, progress tracking |
+| P5-MS11 | Distribution-Specific Builders | Create workflows per distro family with appropriate steps |
 
 ---
 
