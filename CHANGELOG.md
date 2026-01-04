@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.5.0] - 2026-01-04
+
+### Added
+- System detection view (`internal/ui/views/detection.go`)
+- DetectionModel with three states: Detecting, Complete, Error
+- Animated spinner with 6 detection step messages
+- GPU section displaying detected NVIDIA GPUs by name
+- Driver section showing type, version, CUDA version
+- System section with kernel, headers, secure boot, nouveau status
+- Validation section with error/warning counts
+- DetectionKeyMap with state-aware key bindings
+- Navigation messages: NavigateToDriverSelectionMsg, NavigateToWelcomeMsg
+- Detection messages: DetectionStepMsg, DetectionCompleteMsg, DetectionErrorMsg
+- Integration with gpu.GPUInfo types from Phase 3
+- 98.8% test coverage
+
 ## [4.4.0] - 2026-01-04
 
 ### Added
