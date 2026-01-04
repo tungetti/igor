@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.4.0] - 2026-01-04
+
+### Added
+- Nouveau blacklist step (`internal/install/steps/nouveau.go`)
+- NouveauBlacklistStep implementing install.Step interface
+- Creates `/etc/modprobe.d/blacklist-nouveau.conf` with:
+  - `blacklist nouveau`
+  - `options nouveau modeset=0`
+- Distribution-specific initramfs regeneration:
+  - Debian/Ubuntu: `update-initramfs -u`
+  - Fedora/RHEL/SUSE: `dracut --force`
+  - Arch: `mkinitcpio -P`
+- Functional options: WithBlacklistPath, WithNouveauDetector, WithSkipInitramfs, WithFileWriter
+- State keys: StateNouveauBlacklisted, StateNouveauBlacklistFile
+- Uses `tee` command for privileged file writing
+- Full rollback support (removes file, regenerates initramfs)
+- Skips if Nouveau already blacklisted
+- Dry-run mode support
+- Cancellation handling at multiple checkpoints
+- 98.3% test coverage
+
 ## [5.3.0] - 2026-01-04
 
 ### Added

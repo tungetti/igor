@@ -522,7 +522,7 @@ Each sprint must pass these gates before approval:
 | P5-MS1 | Define Installation Workflow Interface | `COMPLETED` | 5.1.0 | P2-MS8, P3-MS7 | Medium |
 | P5-MS2 | Implement Pre-Installation Validation Step | `COMPLETED` | 5.2.0 | P5-MS1, P3-MS6 | Small |
 | P5-MS3 | Implement Repository Configuration Step | `COMPLETED` | 5.3.0 | P5-MS1, P2-MS3 through P2-MS7 | Medium |
-| P5-MS4 | Implement Nouveau Blacklist Step | `NOT_STARTED` | 5.4.0 | P5-MS1, P3-MS4 | Small |
+| P5-MS4 | Implement Nouveau Blacklist Step | `COMPLETED` | 5.4.0 | P5-MS1, P3-MS4 | Small |
 | P5-MS5 | Implement Package Installation Step | `NOT_STARTED` | 5.5.0 | P5-MS1, P2-MS8, P2-MS9 | Large |
 | P5-MS6 | Implement DKMS Module Build Step | `NOT_STARTED` | 5.6.0 | P5-MS1, P3-MS5 | Medium |
 | P5-MS7 | Implement Module Loading Step | `NOT_STARTED` | 5.7.0 | P5-MS1, P3-MS5 | Small |
@@ -2912,6 +2912,53 @@ Additional context
 
 ---
 
+#### Session 2026-01-04 - P5-MS4 Implementation
+
+**Sprint:** P5-MS4
+**Version:** 5.4.0
+**Status:** COMPLETED
+
+**Activities:**
+- [x] Updated VERSION file to 5.4.0
+- [x] Delegated implementation to code-implementator agent
+- [x] Created internal/install/steps/nouveau.go (357 lines)
+- [x] Created internal/install/steps/nouveau_test.go (1463 lines, 54+ tests)
+- [x] Code review by code-reviewer agent - APPROVED
+- [x] All tests passed with 98.3% coverage
+
+**Features Implemented:**
+- NouveauBlacklistStep implementing install.Step interface
+- Creates `/etc/modprobe.d/blacklist-nouveau.conf` with blacklist entries
+- Distribution-specific initramfs regeneration:
+  - Debian/Ubuntu: `update-initramfs -u`
+  - Fedora/RHEL/SUSE: `dracut --force`
+  - Arch: `mkinitcpio -P`
+- Uses `tee` command for privileged file writing
+- Full rollback support (removes file, regenerates initramfs)
+- Skips if Nouveau already blacklisted
+- Functional options: WithBlacklistPath, WithNouveauDetector, WithSkipInitramfs, WithFileWriter
+- State keys: StateNouveauBlacklisted, StateNouveauBlacklistFile
+- Dry-run mode support
+- Cancellation handling at multiple checkpoints
+
+**Test Results:**
+- `internal/install/steps`: 98.3% coverage
+- `go build ./...`: PASS
+- `go test ./...`: PASS
+- `go vet ./...`: PASS
+
+**Human Validation:** APPROVED
+
+**Commits:**
+- `[Phase 5 Sprint 4] Implement Nouveau blacklist step` - v5.4.0
+
+**Notes:**
+- Fourth installation step complete
+- Critical step for blacklisting Nouveau before NVIDIA driver installation
+- Ready for P5-MS5 (Package Installation Step)
+
+---
+
 ## 6. Git Workflow
 
 ### Repository Setup
@@ -3087,8 +3134,8 @@ timeout: 300  # seconds
 | **Last Updated** | 2026-01-04 |
 | **Author** | OpenCode Assistant |
 | **Status** | Active |
-| **Project Version** | 5.3.0 |
-| **Next Sprint** | P5-MS4 (Nouveau Blacklist Step) |
+| **Project Version** | 5.4.0 |
+| **Next Sprint** | P5-MS5 (Package Installation Step) |
 
 ---
 
@@ -3103,16 +3150,16 @@ timeout: 300  # seconds
 **Working Directory:** `/home/tommasomariaungetti/Git/igor`  
 **Module:** `github.com/tungetti/igor`  
 **Go Version:** 1.21  
-**Current Version:** 5.3.0
+**Current Version:** 5.4.0
 
 ### Progress Summary
 
 | Metric | Value |
 |--------|-------|
-| Total Commits | 40 |
-| Total Tags | 39 (v1.1.0 - v5.3.0) |
+| Total Commits | 41 |
+| Total Tags | 40 (v1.1.0 - v5.4.0) |
 | Phases Complete | 4 of 7 |
-| Sprints Complete | 39 of 62 (63%) |
+| Sprints Complete | 40 of 62 (65%) |
 
 ### Completed Phases
 
@@ -3125,15 +3172,15 @@ timeout: 300  # seconds
 
 ### Current Phase: Phase 5 - Installation Workflow Engine
 
-**Status:** IN_PROGRESS (3 of 11 sprints complete)
+**Status:** IN_PROGRESS (4 of 11 sprints complete)
 
 | Sprint | Description | Status | Version |
 |--------|-------------|--------|---------|
 | P5-MS1 | Define Installation Workflow Interface | COMPLETED | v5.1.0 |
 | P5-MS2 | Implement Pre-Installation Validation Step | COMPLETED | v5.2.0 |
 | P5-MS3 | Implement Repository Configuration Step | COMPLETED | v5.3.0 |
-| P5-MS4 | Implement Nouveau Blacklist Step | **NEXT** | v5.4.0 |
-| P5-MS5 | Implement Package Installation Step | Pending | v5.5.0 |
+| P5-MS4 | Implement Nouveau Blacklist Step | COMPLETED | v5.4.0 |
+| P5-MS5 | Implement Package Installation Step | **NEXT** | v5.5.0 |
 | P5-MS6 | Implement DKMS Module Build Step | Pending | v5.6.0 |
 | P5-MS7 | Implement Module Loading Step | Pending | v5.7.0 |
 | P5-MS8 | Implement X.org Configuration Step | Pending | v5.8.0 |
@@ -3239,8 +3286,8 @@ go test -cover ./internal/install/...
 ### Resume Instructions
 
 1. Read this file (IGOR_PROJECT.md) to understand current state
-2. Check `cat VERSION` to confirm current version (should be 5.2.0)
-3. Continue with next sprint: **P5-MS3 (Repository Configuration Step)**
+2. Check `cat VERSION` to confirm current version (should be 5.4.0)
+3. Continue with next sprint: **P5-MS5 (Package Installation Step)**
 4. Follow the Sprint Pipeline exactly as documented above
 5. After each sprint, get human approval before committing
 
