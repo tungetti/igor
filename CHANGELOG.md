@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.6.0] - 2026-01-04
+
+### Added
+- Driver selection view (`internal/ui/views/selection.go`)
+- SelectionModel with two-panel layout: drivers and components
+- DriverOption struct with version, branch, description, recommended flag
+- ComponentOption struct with name, ID, description, selected, required flags
+- Four driver versions: 550 (Latest), 545 (Production), 535 (LTS), 470 (Legacy)
+- Four components: Driver (required), CUDA Toolkit, cuDNN, NVIDIA Settings
+- Section navigation with Tab key, Up/Down navigation within sections
+- Space to toggle component selection, required components protected
+- SelectionKeyMap with vim-style navigation and help.KeyMap interface
+- NavigateToConfirmationMsg with selected driver and components
+- Responsive two-column layout
+- 97.8% test coverage
+
 ## [4.5.0] - 2026-01-04
 
 ### Added
