@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.7.0] - 2026-01-04
+
+### Added
+- Installation confirmation view (`internal/ui/views/confirmation.go`)
+- ConfirmationModel displaying installation summary before proceeding
+- GPU section showing target GPU name with fallback handling
+- Driver section showing selected version and branch
+- Components section listing selected components with checkmarks (✓)
+- Warnings section with system warnings (Nouveau, Secure Boot, headers, existing driver)
+- buildWarnings function checking system state for potential issues
+- Two buttons: "Install" and "Go Back" with keyboard navigation
+- StartInstallationMsg containing GPUInfo, Driver, and Components
+- NavigateBackToSelectionMsg for returning to driver selection
+- ConfirmationKeyMap with multiple key options (enter/y, esc/n, vim-style)
+- 98.3% test coverage
+
 ## [4.6.0] - 2026-01-04
 
 ### Added
