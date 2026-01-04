@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.5.0] - 2026-01-04
+
+### Added
+- Kernel version and module detection (`internal/gpu/kernel`)
+- Detector interface with GetKernelInfo, IsModuleLoaded, GetLoadedModules, GetModule
+- AreHeadersInstalled, GetHeadersPackage, IsSecureBootEnabled methods
+- KernelInfo struct with Version, Release, Architecture, HeadersPath, HeadersInstalled, SecureBootEnabled
+- ModuleInfo struct with Name, Size, UsedBy, UsedCount, State
+- /proc/modules parsing with comprehensive error handling
+- Distribution-aware kernel headers package names (Debian, RHEL, Arch, SUSE)
+- Secure Boot detection via mokutil and EFI variables fallback
+- 92.2% test coverage
+
 ## [3.4.0] - 2026-01-04
 
 ### Added
