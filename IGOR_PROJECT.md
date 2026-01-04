@@ -519,7 +519,7 @@ Each sprint must pass these gates before approval:
 | Sprint ID | Title | Status | Version | Dependencies | Effort |
 |-----------|-------|--------|---------|--------------|--------|
 | P5-MS1 | Define Installation Workflow Interface | `COMPLETED` | 5.1.0 | P2-MS8, P3-MS7 | Medium |
-| P5-MS2 | Implement Pre-Installation Validation Step | `NOT_STARTED` | 5.2.0 | P5-MS1, P3-MS6 | Small |
+| P5-MS2 | Implement Pre-Installation Validation Step | `COMPLETED` | 5.2.0 | P5-MS1, P3-MS6 | Small |
 | P5-MS3 | Implement Repository Configuration Step | `NOT_STARTED` | 5.3.0 | P5-MS1, P2-MS3 through P2-MS7 | Medium |
 | P5-MS4 | Implement Nouveau Blacklist Step | `NOT_STARTED` | 5.4.0 | P5-MS1, P3-MS4 | Small |
 | P5-MS5 | Implement Package Installation Step | `NOT_STARTED` | 5.5.0 | P5-MS1, P2-MS8, P2-MS9 | Large |
