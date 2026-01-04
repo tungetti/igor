@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.3.0] - 2026-01-04
+
+### Added
+- Repository configuration step (`internal/install/steps/repository.go`)
+- RepositoryStep implementing install.Step interface
+- Configures NVIDIA repositories based on detected Linux distribution
+- Functional option: WithSkipUpdate for batched repository additions
+- State keys: StateRepositoryConfigured, StateRepositoryName
+- Distribution-specific handling:
+  - Debian/Ubuntu: Graphics drivers PPA or CUDA repository
+  - Fedora/RHEL: RPM Fusion nonfree repository
+  - openSUSE: Official NVIDIA repository
+  - Arch Linux: Skips (uses official repos)
+- Automatic rollback on update failure
+- Dry-run mode support
+- Cancellation handling at multiple checkpoints
+- Full rollback capability (removes added repository)
+- 98.2% test coverage
+
 ## [5.2.0] - 2026-01-04
 
 ### Added
