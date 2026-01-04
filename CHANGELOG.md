@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.6.0] - 2026-01-04
+
+### Added
+- System requirements validator (`internal/gpu/validator`)
+- Validator interface with Validate, ValidateKernel, ValidateDiskSpace, ValidateSecureBoot
+- ValidateKernelHeaders, ValidateBuildTools, ValidateNouveauStatus methods
+- CheckResult struct with Name, Passed, Message, Severity, Remediation
+- ValidationReport with aggregated Errors, Warnings, Infos
+- Severity levels: Error, Warning, Info
+- Configurable thresholds for disk space, kernel version, required tools
+- Integration with kernel.Detector and nouveau.Detector
+- Remediation suggestions for all failed checks
+- 97.7% test coverage
+
 ## [3.5.0] - 2026-01-04
 
 ### Added
