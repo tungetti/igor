@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.5.0] - 2026-01-05
+
+### Added
+- Configuration cleanup step (`internal/uninstall/steps/config.go`)
+- ConfigCleanupStep removes NVIDIA configuration files with backup support
+- Default paths for nouveau blacklist, X.org config, modprobe config, persistence config
+- Functional options:
+  - WithConfigPaths: Specific paths to remove
+  - WithBackupDir: Backup directory (default: /var/lib/igor/backup/configs)
+  - WithCreateBackup: Enable backup before removal (default: true)
+  - WithRemoveBlacklist: Remove nouveau blacklist files
+  - WithRemoveXorgConf: Remove X.org nvidia config
+  - WithRemoveModprobe: Remove modprobe.d nvidia configs
+  - WithRemovePersistence: Remove nvidia-persistenced config
+- State tracking: StateConfigsCleaned, StateCleanedConfigs, StateBackedUpConfigs, StateBackupDir
+- Security: Path traversal prevention, command injection prevention, allowlist-based directory validation
+- Rollback support: restores configs from backup directory
+- 90.4% test coverage
+
 ## [6.4.0] - 2026-01-05
 
 ### Added
