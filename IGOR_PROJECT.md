@@ -146,18 +146,18 @@ igor/
 │   │   ├── privilege.go
 ```
 
-### 1.5 Current Project Metrics (as of v6.5.0)
+### 1.5 Current Project Metrics (as of v6.6.0)
 
 | Metric | Value |
 |--------|-------|
-| **Version** | 6.5.0 |
-| **Total Go Files** | ~130 (source + test) |
-| **Lines of Code** | ~65,000 |
+| **Version** | 6.6.0 |
+| **Total Go Files** | ~135 (source + test) |
+| **Lines of Code** | ~68,000 |
 | **Test Coverage** | 90%+ average |
-| **Commits** | 54 |
-| **Tags** | 52 (v1.1.0 - v6.5.0) |
+| **Commits** | 55 |
+| **Tags** | 53 (v1.1.0 - v6.6.0) |
 | **Phases Complete** | 5 of 7 |
-| **Sprints Complete** | 52 of 62 (84%) |
+| **Sprints Complete** | 53 of 62 (85%) |
 
 ### 1.6 Package Test Coverage
 
@@ -543,7 +543,7 @@ Each sprint must pass these gates before approval:
 | P6-MS3 | Implement Package Removal Step | `COMPLETED` | 6.3.0 | P6-MS1, P6-MS2 | Medium |
 | P6-MS4 | Implement Kernel Module Cleanup Step | `COMPLETED` | 6.4.0 | P6-MS1, P3-MS5 | Small |
 | P6-MS5 | Implement Configuration Cleanup Step | `COMPLETED` | 6.5.0 | P6-MS1 | Small |
-| P6-MS6 | Implement Fallback Driver Restoration | `NOT_STARTED` | 6.6.0 | P6-MS4, P6-MS5 | Small |
+| P6-MS6 | Implement Fallback Driver Restoration | `COMPLETED` | 6.6.0 | P6-MS4, P6-MS5 | Small |
 | P6-MS7 | Implement Uninstall TUI Views | `NOT_STARTED` | 6.7.0 | P6-MS1, P4-MS7, P4-MS8, P4-MS9 | Medium |
 | P6-MS8 | Create Uninstall Orchestrator | `NOT_STARTED` | 6.8.0 | P6-MS2 through P6-MS6 | Medium |
 | P6-MS9 | Implement System Recovery Mode | `NOT_STARTED` | 6.9.0 | P6-MS8, P1-MS6 | Medium |
