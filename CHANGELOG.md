@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.7.0] - 2026-01-05
+
+### Added
+- Uninstall TUI views (`internal/ui/views/uninstall_*.go`)
+- UninstallConfirmModel: Confirmation view showing what will be removed
+  - Displays driver version, packages, config files to remove
+  - Shows nouveau restoration option and warnings
+  - Confirm/Cancel buttons with keyboard navigation
+  - Key bindings: enter/y confirm, esc/n cancel, left/right navigation
+- UninstallProgressModel: Progress view with step-by-step tracking
+  - Progress bar with percentage display
+  - Step status indicators: ○ pending, ● running, ✓ complete, ✗ failed, - skipped
+  - Log output with scrolling
+  - Elapsed time display
+  - Handles completion, failure, and cancellation states
+- Message types for uninstall workflow:
+  - UninstallConfirmedMsg, UninstallCancelledMsg
+  - UninstallStepStartedMsg, UninstallStepCompletedMsg
+  - UninstallLogMsg, UninstallCompleteMsg
+  - NavigateToUninstallCompleteMsg, NavigateToUninstallErrorMsg
+- UninstallStep struct for tracking step progress
+- 98.5% test coverage
+
 ## [6.6.0] - 2026-01-05
 
 ### Added
