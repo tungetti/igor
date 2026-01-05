@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.3.0] - 2026-01-05
+
+### Added
+- Package manager integration tests (~4,000 lines)
+- YUM integration tests (`yum_integration_test.go`, 659 lines):
+  - Complete workflow, NVIDIA driver workflow, error recovery
+  - Concurrent operations, context cancellation
+  - Output parsing edge cases, benchmarks
+- Pacman integration tests (`pacman_integration_test.go`, 781 lines):
+  - Arch-specific features (keyring, orphan removal)
+  - Search output variations, repository management
+- Zypper integration tests (`zypper_integration_test.go`, 809 lines):
+  - SUSE-specific features (priority management, refresh toggles)
+  - NVIDIA repository helpers, table format parsing
+- Factory integration tests (`factory_integration_test.go`, 728 lines):
+  - All distribution coverage, version mapping tests
+  - CentOS/RHEL to YUM/DNF mapping
+  - Concurrent creation, lazy initialization
+- Enhanced APT and DNF integration tests
+- All package managers maintain >87% coverage
+
 ## [7.2.0] - 2026-01-05
 
 ### Added
