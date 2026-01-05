@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.2.0] - 2026-01-05
+
+### Added
+- Installed package discovery (`internal/uninstall/discovery.go`)
+- DiscoveredPackages struct with categorized package information:
+  - DriverPackages, CUDAPackages, LibraryPackages, UtilityPackages
+  - KernelModulePackages, ConfigPackages, AllPackages
+  - DriverVersion and CUDAVersion extraction
+  - Helper methods: IsEmpty(), HasDriver(), HasCUDA()
+- Discovery interface for package discovery operations:
+  - Discover(): Full discovery of all NVIDIA packages
+  - DiscoverDriver(): Driver-only discovery with version
+  - DiscoverCUDA(): CUDA-only discovery with version
+  - IsNVIDIAInstalled(): Check for any NVIDIA packages
+  - GetDriverVersion(): Get installed driver version
+- PackageDiscovery implementation using pkg.Manager
+- Distribution-specific package patterns for:
+  - Debian: nvidia-driver-*, libnvidia-*, cuda-toolkit-*, nvidia-dkms
+  - RHEL: nvidia-driver, kmod-nvidia, akmod-nvidia, cuda-*
+  - Arch: nvidia, nvidia-lts, nvidia-open, cuda, nvidia-dkms
+  - SUSE: nvidia-driver-G06-kmp-*, nvidia-video-G06, cuda-*
+- Helper functions:
+  - FilterNVIDIAPackages(): Filter package list to NVIDIA only
+  - CategorizePackages(): Categorize by type per distribution
+  - GetDriverVersionFromPackages(): Extract driver version
+  - GetCUDAVersionFromPackages(): Extract CUDA version
+- Functional options: WithDiscoveryDistro, WithDiscoveryExecutor
+- 95.0% test coverage
+
 ## [6.1.0] - 2026-01-05
 
 ### Added
