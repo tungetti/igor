@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.0] - 2026-01-05
+
+### Added
+- Module loading step (`internal/install/steps/modload.go`)
+- ModuleLoadStep implementing install.Step interface
+- Loads NVIDIA kernel modules via modprobe:
+  - Default modules: nvidia, nvidia-uvm, nvidia-drm, nvidia-modeset
+  - Check if module already loaded via kernel.Detector or lsmod fallback
+  - Load modules in order, unload in reverse order for rollback
+- Functional options:
+  - WithModuleNames: Set specific modules to load
+  - WithSkipIfLoaded: Skip if nvidia module already loaded (default: true)
+  - WithModuleKernelDetector: Set kernel detector for testing
+  - WithForceReload: Force unload and reload even if loaded
+- State keys: StateModulesLoaded, StateLoadedModules
+- Handles empty module list gracefully (returns skip)
+- Full rollback capability (modprobe -r in reverse order)
+- Input validation for module names (security)
+- Dry-run mode support
+- Cancellation handling at multiple checkpoints
+- Partial failure cleanup during load
+- 92.8% test coverage
+
 ## [5.6.0] - 2026-01-04
 
 ### Added
