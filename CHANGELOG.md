@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.3.0] - 2026-01-05
+
+### Added
+- Package removal step (`internal/uninstall/steps/removal.go`)
+- PackageRemovalStep implementing install.Step interface
+- Removes NVIDIA packages using package manager with options:
+  - WithPackagesToRemove: Specific packages to remove
+  - WithRemoveAll: Remove all discovered NVIDIA packages
+  - WithPurge: Purge config files (apt purge vs apt remove)
+  - WithAutoRemove: Remove orphaned dependencies (default: true)
+  - WithRemovalBatchSize: Batch size for removal
+  - WithRemovalDiscovery: Discovery instance for removeAll mode
+- State tracking:
+  - StatePackagesRemoved, StateRemovedPackages, StateFailedPackages, StateRemovalPurged
+- Partial failure handling (continues on individual package failures)
+- Dry-run mode support
+- Batch processing with cancellation checks between batches
+- CanRollback returns false (package removal is not reversible)
+- MockDiscovery and RemovalMockManager for testing
+- 98.2% test coverage
+
 ## [6.2.0] - 2026-01-05
 
 ### Added
