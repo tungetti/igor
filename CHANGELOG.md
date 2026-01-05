@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.5.0] - 2026-01-05
+
+### Added
+- TUI component integration tests (~3,700 lines)
+- App integration tests (`app_integration_test.go`, 919 lines):
+  - Complete user flow testing (welcome to completion)
+  - Navigation flow (forward, backward, escape)
+  - Keyboard interaction (arrow keys, Tab, Enter, Escape)
+  - Error recovery scenarios
+  - Resize handling (various terminal sizes)
+- Views integration tests (`views_integration_test.go`, 1,126 lines):
+  - All views tested (welcome, detection, selection, confirmation, progress, complete, error)
+  - Uninstall-specific views
+  - Driver list navigation, confirmation dialogs
+- Components integration tests (`components_integration_test.go`, 747 lines):
+  - Progress bar animations, spinner frames
+  - List interactions, button states
+  - Panel rendering, help component
+- Theme integration tests (`theme_integration_test.go`, 911 lines):
+  - Color consistency across themes
+  - Responsive styling (20x10 to 250x80)
+  - Accessibility tests (high contrast, color distinctness)
+  - Style application benchmarks
+- Coverage improvements: internal/ui 87.9% (+4.6%)
+
 ## [7.4.0] - 2026-01-05
 
 ### Added
