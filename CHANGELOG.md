@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.9.0] - 2026-01-05
+
+### Added
+- Post-installation verification step (`internal/install/steps/verify.go`)
+- VerificationStep implementing install.Step interface
+- Verifies NVIDIA driver installation success via multiple checks:
+  - nvidia-smi availability and driver version detection
+  - nvidia kernel module loaded check
+  - GPU detection via nvidia-smi output parsing
+  - X.org configuration file existence check
+- VerificationCheck struct for individual check results (Name, Description, Passed, Message, Critical)
+- CustomCheckFunc type for user-defined verification functions
+- Functional options:
+  - WithCheckNvidiaSmi: Enable/disable nvidia-smi check
+  - WithCheckModuleLoaded: Enable/disable module check
+  - WithCheckGPUDetected: Enable/disable GPU detection
+  - WithCheckXorgConfig: Enable/disable X.org config check
+  - WithFailOnWarning: Treat non-critical failures as step failures
+  - WithVerificationKernelDetector: Set kernel detector for testing
+  - WithCustomCheck: Add custom verification functions
+- State keys: StateVerificationPassed, StateDriverVersion, StateNvidiaSmiAvailable, StateModuleLoaded, StateGPUDetected, StateVerificationErrors
+- Read-only step (no rollback capability)
+- Critical vs non-critical check distinction
+- Dry-run mode support
+- Cancellation handling at multiple checkpoints
+- 91.1% test coverage
+
 ## [5.8.0] - 2026-01-05
 
 ### Added
