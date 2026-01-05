@@ -146,18 +146,18 @@ igor/
 │   │   ├── privilege.go
 ```
 
-### 1.5 Current Project Metrics (as of v7.1.0)
+### 1.5 Current Project Metrics (as of v7.2.0)
 
 | Metric | Value |
 |--------|-------|
-| **Version** | 7.1.0 |
-| **Total Go Files** | ~154 (source + test) |
-| **Lines of Code** | ~83,700 |
+| **Version** | 7.2.0 |
+| **Total Go Files** | ~156 (source + test) |
+| **Lines of Code** | ~85,000 |
 | **Test Coverage** | 90%+ average |
-| **Commits** | 60 |
-| **Tags** | 57 (v1.1.0 - v7.1.0) |
+| **Commits** | 61 |
+| **Tags** | 58 (v1.1.0 - v7.2.0) |
 | **Phases Complete** | 6 of 7 |
-| **Sprints Complete** | 57 of 62 (92%) |
+| **Sprints Complete** | 58 of 62 (94%) |
 
 ### 1.6 Package Test Coverage
 
@@ -171,7 +171,7 @@ igor/
 | internal/cli | 97% |
 | internal/pkg/factory | 97% |
 | internal/pkg/nvidia | 97.9% |
-| internal/distro | 96% |
+| internal/distro | 96.8% |
 | internal/pkg/apt | 94% |
 | internal/pkg/dnf | 93.8% |
 | internal/app | 93% |
@@ -560,7 +560,7 @@ Each sprint must pass these gates before approval:
 | Sprint ID | Title | Status | Version | Dependencies | Effort |
 |-----------|-------|--------|---------|--------------|--------|
 | P7-MS1 | Create Unit Test Infrastructure | `COMPLETED` | 7.1.0 | P1-MS2 | Medium |
-| P7-MS2 | Implement Distribution Detection Tests | `NOT_STARTED` | 7.2.0 | P7-MS1, P2-MS2 | Medium |
+| P7-MS2 | Implement Distribution Detection Tests | `COMPLETED` | 7.2.0 | P7-MS1, P2-MS2 | Medium |
 | P7-MS3 | Implement Package Manager Tests | `NOT_STARTED` | 7.3.0 | P7-MS1, P2-MS3 through P2-MS7 | Large |
 | P7-MS4 | Implement GPU Detection Tests | `NOT_STARTED` | 7.4.0 | P7-MS1, P3-MS1, P3-MS3, P3-MS7 | Medium |
 | P7-MS5 | Implement TUI Component Tests | `NOT_STARTED` | 7.5.0 | P7-MS1, P4-MS1 through P4-MS6 | Medium |
@@ -3296,8 +3296,8 @@ timeout: 300  # seconds
 | Sprint | Description | Status | Version |
 |--------|-------------|--------|---------|
 | P7-MS1 | Create Unit Test Infrastructure | COMPLETED | v7.1.0 |
-| P7-MS2 | Implement Distribution Detection Tests | **NEXT** | v7.2.0 |
-| P7-MS3 | Implement Package Manager Tests | PENDING | v7.3.0 |
+| P7-MS2 | Implement Distribution Detection Tests | COMPLETED | v7.2.0 |
+| P7-MS3 | Implement Package Manager Tests | **NEXT** | v7.3.0 |
 | P7-MS4 | Implement GPU Detection Tests | PENDING | v7.4.0 |
 | P7-MS5 | Implement TUI Component Tests | PENDING | v7.5.0 |
 | P7-MS6 | Implement Installation Workflow Tests | PENDING | v7.6.0 |
@@ -3421,9 +3421,9 @@ go test -cover ./internal/install/...
 ### Resume Instructions
 
 1. Read this file (IGOR_PROJECT.md) to understand current state
-2. Check `cat VERSION` to confirm current version (should be 7.1.0)
+2. Check `cat VERSION` to confirm current version (should be 7.2.0)
 3. Continue with **Phase 7 (Testing, Validation & Documentation)**
-4. Next sprint: **P7-MS2 (Implement Distribution Detection Tests)**
+4. Next sprint: **P7-MS3 (Implement Package Manager Tests)**
 5. Follow the Sprint Pipeline exactly as documented above
 6. After each sprint, get human approval before committing
 

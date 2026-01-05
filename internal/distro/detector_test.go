@@ -11,6 +11,11 @@ import (
 	"github.com/tungetti/igor/internal/exec"
 )
 
+// NOTE: We cannot import github.com/tungetti/igor/internal/testing here
+// because that package imports distro, which would create an import cycle.
+// Instead, we define local test fixtures and mocks that mirror the patterns
+// from internal/testing.
+
 // MockFileReader is a mock implementation of FileReader for testing.
 type MockFileReader struct {
 	files map[string][]byte
@@ -50,6 +55,23 @@ type fileNotFoundError struct {
 func (e *fileNotFoundError) Error() string {
 	return "file not found: " + e.path
 }
+
+// ============================================================================
+// Test Context Helpers
+// ============================================================================
+
+// testContext creates a context with a default timeout suitable for testing.
+// This mirrors the pattern from internal/testing.ContextWithTimeout.
+func testContext(t *testing.T) (context.Context, context.CancelFunc) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	t.Cleanup(cancel)
+	return ctx, cancel
+}
+
+// ============================================================================
+// Sample OS Release Files for Testing
+// ============================================================================
 
 // Sample os-release files for testing
 var (

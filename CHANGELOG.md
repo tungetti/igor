@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.2.0] - 2026-01-05
+
+### Added
+- Enhanced distribution detection tests (`internal/distro/`)
+- Integration tests (`detector_integration_test.go`, 876 lines):
+  - Complete detection workflows for Debian, RHEL, Arch, SUSE families
+  - Tests for 11+ different distributions with realistic os-release fixtures
+  - File system error handling (missing files, read errors)
+  - Malformed os-release handling (empty, invalid format, binary garbage)
+  - Full fallback detection chain testing
+  - Context cancellation and timeout handling
+  - Concurrent access testing (100 goroutines)
+  - Rolling release detection (Arch, Manjaro, Tumbleweed)
+  - Edge cases: unicode, version parsing, ID_LIKE with multiple values
+- Benchmark tests (`detector_benchmark_test.go`, 446 lines):
+  - Main detection function benchmark
+  - Per-distro detection benchmarks
+  - OS-release and LSB-release parsing benchmarks
+  - Parallel detection benchmark
+  - Distribution method benchmarks (String, IsFamily, versions)
+  - Fallback chain performance
+  - Parser function benchmarks (Unquote, ParseIDLike)
+- 96.8% test coverage maintained
+
 ## [7.1.0] - 2026-01-05
 
 ### Added
