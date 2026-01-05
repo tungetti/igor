@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.4.0] - 2026-01-05
+
+### Added
+- Kernel module cleanup step (`internal/uninstall/steps/modunload.go`)
+- ModuleUnloadStep unloads NVIDIA kernel modules using `modprobe -r`
+- Default modules unloaded in reverse order: nvidia-modeset, nvidia-drm, nvidia-uvm, nvidia
+- Functional options:
+  - WithUnloadModuleNames: Specific modules to unload
+  - WithSkipIfNotLoaded: Skip if not loaded (default: true)
+  - WithUnloadKernelDetector: Custom kernel detector
+  - WithForceUnload: Force unload with rmmod -f (dangerous)
+  - WithUnloadRetry: Retry count and delay for in-use modules
+- State tracking: StateModulesUnloaded, StateUnloadedModules, StateModulesInUse
+- Retry logic for modules in use (default: 3 retries, 1s delay)
+- Force unload fallback with rmmod -f when enabled
+- Rollback support: CanRollback returns true, reloads unloaded modules
+- Security: isValidModuleName validates against command injection
+- Helper functions: isModuleInUse, getModuleHolders, filterLoadedModules
+- 91.7% test coverage
+
 ## [6.3.0] - 2026-01-05
 
 ### Added
