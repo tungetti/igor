@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.1.0] - 2026-01-05
+
+### Added
+- Uninstallation workflow interface (`internal/uninstall/`)
+- UninstallStatus enum: Pending, Running, Completed, Partial, Failed, Cancelled
+- UninstallResult struct tracking:
+  - RemovedPackages, FailedPackages, CleanedConfigs
+  - CompletedSteps, FailedStep, Error
+  - NeedsReboot, NouveauRestored flags
+- UninstallContext with state management:
+  - DistroInfo, InstalledDriver, InstalledPackages
+  - PackageManager, Executor, Privilege, Logger
+  - Special flags: DryRun, Force, KeepConfig
+  - Thread-safe state storage with typed getters
+- UninstallStep as type alias for install.Step (code reuse)
+- UninstallFuncStep for function-based step implementation
+- UninstallWorkflow interface with:
+  - Name(), Steps(), AddStep(), Execute(), OnProgress(), Cancel()
+- BaseUninstallWorkflow implementation:
+  - Progress callbacks using install.StepProgress
+  - State synchronization between contexts
+  - Partial result tracking
+- State key constants: StatePackagesRemoved, StateRemovedPackages, StateConfigsCleaned, StateCleanedConfigs, StateModulesUnloaded, StateNouveauUnblocked, StateNouveauRestored
+- Functional options for context configuration
+- Helper functions: SkipUninstallStep, CompleteUninstallStep, FailUninstallStep
+- 94.7% test coverage
+- **PHASE 6 STARTED!**
+
 ## [5.11.0] - 2026-01-05
 
 ### Added
