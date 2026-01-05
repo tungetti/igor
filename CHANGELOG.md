@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.8.0] - 2026-01-05
+
+### Added
+- X.org configuration step (`internal/install/steps/xorg.go`)
+- XorgConfigStep implementing install.Step interface
+- Creates NVIDIA X.org configuration at `/etc/X11/xorg.conf.d/20-nvidia.conf`:
+  - OutputClass section with nvidia driver
+  - AllowEmptyInitialConfiguration and PrimaryGPU options
+- Display server detection (Wayland vs X.org):
+  - Detects via XDG_SESSION_TYPE environment variable
+  - Optional skip on Wayland sessions
+- Functional options:
+  - WithXorgConfigDir: Set custom config directory
+  - WithXorgConfigFile: Set custom config filename
+  - WithXorgConfigContent: Set custom config content
+  - WithSkipIfWayland: Skip configuration on Wayland
+  - WithBackupExisting: Backup existing config (default: true)
+  - WithXorgFileWriter: Set file writer for testing
+  - WithDisplayDetector: Set display detector for testing
+- State keys: StateXorgConfigured, StateXorgConfigPath, StateXorgBackupPath, StateXorgDisplayServer
+- Backs up existing configuration before overwriting
+- Full rollback capability (removes config, restores backup)
+- Path validation to prevent command injection and path traversal
+- Dry-run mode support (directory creation and backup are dry-run aware)
+- Cancellation handling at multiple checkpoints
+- 90.9% test coverage
+
 ## [5.7.0] - 2026-01-05
 
 ### Added
