@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.1.0] - 2026-01-05
+
+### Added
+- Unit test infrastructure (`internal/testing/`)
+- Centralized mock implementations (`mocks.go`, 1039 lines):
+  - MockLogger: Implements logging.Logger with message recording and filtering
+  - MockPackageManager: Implements pkg.Manager for testing package operations
+  - MockDistroDetector: For testing distribution detection
+  - ExecutorBuilder: Fluent API for building exec.MockExecutor instances
+  - MockProgressReporter: For testing progress reporting
+  - All mocks are thread-safe with sync.Mutex
+- Test fixtures (`fixtures.go`, 716 lines):
+  - OS release content for 10+ distributions (Ubuntu, Fedora, Arch, openSUSE, Debian, RHEL, etc.)
+  - Distribution fixture functions (UbuntuDistribution, FedoraDistribution, etc.)
+  - GPU fixtures (RTX 3080, A100, GTX 750 Ti, AMD RX 6800)
+  - Sample lspci, nvidia-smi, /proc/modules output
+  - TempDirBuilder for creating test directories with files
+  - MockFileReader for testing file operations
+- Test helpers (`helpers.go`, 593 lines):
+  - Context helpers: ContextWithTimeout, ContextWithCancel, TestContext, ShortContext
+  - Skip helpers: SkipIfRoot, SkipIfNotRoot, SkipShort, SkipOnCI
+  - Wait/Retry utilities: WaitFor, Retry, EventuallyEqual
+  - Environment variable helpers: SetEnv, SetEnvs, UnsetEnv
+  - Temp file/directory helpers with automatic cleanup
+  - MockTime for controllable time in tests
+  - Counter for thread-safe counting
+- Custom test assertions (`assertions.go`, 630 lines):
+  - Error assertions: AssertErrorCode, AssertErrorContains, AssertNoError
+  - Step result assertions: AssertStepSuccess, AssertStepFailed, AssertStepSkipped
+  - Package manager assertions: AssertPackageInstalled, AssertPackageRemoved
+  - Executor assertions: AssertCommandCalled, AssertCommandNotCalled
+  - Logger assertions: AssertLogContains, AssertLogLevel
+  - File system assertions: AssertFileExists, AssertFileContains, AssertDirExists
+  - Value assertions: AssertEqual, AssertNil, AssertLen, AssertContains
+- All helpers use testing.TB interface for compatibility with tests and benchmarks
+- 76.2% test coverage (expected for test utilities)
+
 ## [6.9.0] - 2026-01-05
 
 ### Added
