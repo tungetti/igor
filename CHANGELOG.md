@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.6.0] - 2026-01-05
+
+### Added
+- Installation workflow integration tests (~3,100 lines) - FINAL SPRINT
+- Orchestrator integration tests (`orchestrator_integration_test.go`, ~1,260 lines):
+  - Complete installation workflow (8 steps)
+  - Rollback testing (reverse order, partial rollback)
+  - Distribution-specific workflows (Debian, RHEL, Arch, SUSE)
+  - Error handling (validation, package, DKMS failures)
+  - Cancellation and dry-run mode
+  - Progress reporting and hooks
+  - Concurrent installation prevention
+- Steps integration tests (`steps_integration_test.go`, ~1,043 lines):
+  - Step chaining and rollback sequences
+  - State sharing between steps
+  - Individual step integration tests
+- Builder integration tests (`builder_integration_test.go`, ~788 lines):
+  - All distribution workflow building
+  - CUDA installation options
+  - Custom and optional steps
+  - Error handling
+
+### Project Status
+- **PROJECT COMPLETE** - All 62 sprints finished
+- **7 Phases Complete**: Foundation, Distribution, GPU, TUI, Install, Uninstall, Testing
+- **100,000+ lines of Go code**
+- **90%+ test coverage average**
+
 ## [7.5.0] - 2026-01-05
 
 ### Added
