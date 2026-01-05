@@ -146,18 +146,18 @@ igor/
 │   │   ├── privilege.go
 ```
 
-### 1.5 Current Project Metrics (as of v6.7.0)
+### 1.5 Current Project Metrics (as of v6.8.0)
 
 | Metric | Value |
 |--------|-------|
-| **Version** | 6.7.0 |
-| **Total Go Files** | ~140 (source + test) |
-| **Lines of Code** | ~72,000 |
+| **Version** | 6.8.0 |
+| **Total Go Files** | ~142 (source + test) |
+| **Lines of Code** | ~74,000 |
 | **Test Coverage** | 90%+ average |
-| **Commits** | 56 |
-| **Tags** | 54 (v1.1.0 - v6.7.0) |
+| **Commits** | 57 |
+| **Tags** | 55 (v1.1.0 - v6.8.0) |
 | **Phases Complete** | 5 of 7 |
-| **Sprints Complete** | 54 of 62 (87%) |
+| **Sprints Complete** | 55 of 62 (89%) |
 
 ### 1.6 Package Test Coverage
 
@@ -178,6 +178,8 @@ igor/
 | internal/privilege | 91% |
 | internal/pkg/zypper | 90.7% |
 | internal/pkg/pacman | 90.6% |
+| internal/uninstall | 96.0% |
+| internal/uninstall/steps | 91.1% |
 | internal/config | 89.4% |
 | internal/pkg/yum | 87% |
 
@@ -545,7 +547,7 @@ Each sprint must pass these gates before approval:
 | P6-MS5 | Implement Configuration Cleanup Step | `COMPLETED` | 6.5.0 | P6-MS1 | Small |
 | P6-MS6 | Implement Fallback Driver Restoration | `COMPLETED` | 6.6.0 | P6-MS4, P6-MS5 | Small |
 | P6-MS7 | Implement Uninstall TUI Views | `COMPLETED` | 6.7.0 | P6-MS1, P4-MS7, P4-MS8, P4-MS9 | Medium |
-| P6-MS8 | Create Uninstall Orchestrator | `NOT_STARTED` | 6.8.0 | P6-MS2 through P6-MS6 | Medium |
+| P6-MS8 | Create Uninstall Orchestrator | `COMPLETED` | 6.8.0 | P6-MS2 through P6-MS6 | Medium |
 | P6-MS9 | Implement System Recovery Mode | `NOT_STARTED` | 6.9.0 | P6-MS8, P1-MS6 | Medium |
 
 ### Phase 7: Testing, Validation & Documentation

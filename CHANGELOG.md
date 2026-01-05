@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.8.0] - 2026-01-05
+
+### Added
+- Uninstall orchestrator (`internal/uninstall/orchestrator.go`)
+- UninstallOrchestrator coordinates all uninstall steps with:
+  - Hook system: UninstallExecutionHook (pre/post workflow), UninstallStepHook (pre/post step)
+  - Event logging: 8 event types for detailed execution tracking
+  - UninstallExecutionEntry for each logged event
+  - UninstallExecutionReport with complete execution details
+- Functional options (10 options):
+  - WithUninstallWorkflow: Set the workflow to execute
+  - WithUninstallOrchestratorDiscovery: Set discovery instance
+  - WithUninstallAutoRollback: Interface consistency (not used for uninstall)
+  - WithUninstallStopOnFirstError: Stop on first error (default: true)
+  - WithUninstallOrchestratorDryRun: Dry-run mode
+  - WithUninstallPreExecuteHook/WithUninstallPostExecuteHook: Workflow hooks
+  - WithUninstallPreStepHook/WithUninstallPostStepHook: Step hooks
+  - WithUninstallOrchestratorProgress: Progress callback
+- Thread-safe execution with sync.RWMutex
+- Dry-run mode support
+- Cancellation handling
+- Stop-on-first-error or continue-on-error modes
+- Progress callbacks with install.StepProgress
+- State synchronization between install.Context and uninstall.Context
+- 96.0% test coverage
+
 ## [6.7.0] - 2026-01-05
 
 ### Added
