@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.4.0] - 2026-01-05
+
+### Added
+- GPU detection integration tests (~3,900 lines)
+- Orchestrator integration tests (`orchestrator_integration_test.go`, 940 lines):
+  - Complete detection workflow tests
+  - Multi-GPU scenarios (SLI, mixed generations, compute nodes)
+  - Error recovery, concurrent detection
+- PCI scanner integration tests (`scanner_integration_test.go`, 527 lines):
+  - Real-world lspci output parsing
+  - GPU architecture identification (Kepler to Blackwell)
+  - Edge cases (empty output, unknown vendors)
+- SMI parser integration tests (`parser_integration_test.go`, 543 lines):
+  - nvidia-smi output formats (versions 535.x, 550.x, 470.x, 390.x)
+  - Driver version extraction, GPU memory parsing
+  - Error conditions (driver not loaded, GPU not found)
+- Database integration tests (`database_integration_test.go`, 497 lines):
+  - All GPU architectures, driver recommendations
+  - Legacy GPU handling (390xx, 470xx drivers)
+- Kernel module tests (`detector_integration_test.go`, 677 lines):
+  - Module states, /proc/modules parsing
+  - Module dependency chains
+- Nouveau detection tests (`detector_integration_test.go`, 737 lines):
+  - Blacklist detection, Optimus configurations
+  - VFIO passthrough scenarios
+- All GPU packages maintain >92% coverage
+
 ## [7.3.0] - 2026-01-05
 
 ### Added
