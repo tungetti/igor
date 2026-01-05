@@ -3245,23 +3245,23 @@ timeout: 300  # seconds
 
 > **Use this section after context compaction to resume development.**
 
-### Current State (Updated: 2026-01-04)
+### Current State (Updated: 2026-01-05)
 
 **Project:** Igor - NVIDIA Driver Installer TUI  
 **Repository:** https://github.com/tungetti/igor.git  
 **Working Directory:** `/home/tommasomariaungetti/Git/igor`  
 **Module:** `github.com/tungetti/igor`  
 **Go Version:** 1.21  
-**Current Version:** 5.10.0
+**Current Version:** 6.8.0
 
 ### Progress Summary
 
 | Metric | Value |
 |--------|-------|
-| Total Commits | 48 |
-| Total Tags | 46 (v1.1.0 - v5.10.0) |
-| Phases Complete | 4 of 7 |
-| Sprints Complete | 46 of 62 (74%) |
+| Total Commits | 57 |
+| Total Tags | 55 (v1.1.0 - v6.8.0) |
+| Phases Complete | 5 of 7 |
+| Sprints Complete | 55 of 62 (89%) |
 
 ### Completed Phases
 
@@ -3271,24 +3271,23 @@ timeout: 300  # seconds
 | Phase 2 | Distribution Detection & Package Manager | 9/9 | COMPLETED (v2.1.0-v2.9.0) |
 | Phase 3 | GPU Detection & System Analysis | 7/7 | COMPLETED (v3.1.0-v3.7.0) |
 | Phase 4 | TUI Framework & Core Views | 11/11 | COMPLETED (v4.1.0-v4.11.0) |
+| Phase 5 | Installation Workflow Engine | 11/11 | COMPLETED (v5.1.0-v5.11.0) |
 
-### Current Phase: Phase 5 - Installation Workflow Engine
+### Current Phase: Phase 6 - Uninstallation & Recovery
 
-**Status:** IN_PROGRESS (10 of 11 sprints complete)
+**Status:** IN_PROGRESS (8 of 9 sprints complete)
 
 | Sprint | Description | Status | Version |
 |--------|-------------|--------|---------|
-| P5-MS1 | Define Installation Workflow Interface | COMPLETED | v5.1.0 |
-| P5-MS2 | Implement Pre-Installation Validation Step | COMPLETED | v5.2.0 |
-| P5-MS3 | Implement Repository Configuration Step | COMPLETED | v5.3.0 |
-| P5-MS4 | Implement Nouveau Blacklist Step | COMPLETED | v5.4.0 |
-| P5-MS5 | Implement Package Installation Step | COMPLETED | v5.5.0 |
-| P5-MS6 | Implement DKMS Module Build Step | COMPLETED | v5.6.0 |
-| P5-MS7 | Implement Module Loading Step | COMPLETED | v5.7.0 |
-| P5-MS8 | Implement X.org Configuration Step | COMPLETED | v5.8.0 |
-| P5-MS9 | Implement Post-Installation Verification Step | COMPLETED | v5.9.0 |
-| P5-MS10 | Implement Workflow Orchestrator | COMPLETED | v5.10.0 |
-| P5-MS11 | Create Distribution-Specific Workflow Builders | **NEXT** | v5.11.0 |
+| P6-MS1 | Implement Uninstallation Workflow Interface | COMPLETED | v6.1.0 |
+| P6-MS2 | Implement Installed Package Discovery | COMPLETED | v6.2.0 |
+| P6-MS3 | Implement Package Removal Step | COMPLETED | v6.3.0 |
+| P6-MS4 | Implement Kernel Module Cleanup Step | COMPLETED | v6.4.0 |
+| P6-MS5 | Implement Configuration Cleanup Step | COMPLETED | v6.5.0 |
+| P6-MS6 | Implement Fallback Driver Restoration | COMPLETED | v6.6.0 |
+| P6-MS7 | Implement Uninstall TUI Views | COMPLETED | v6.7.0 |
+| P6-MS8 | Create Uninstall Orchestrator | COMPLETED | v6.8.0 |
+| P6-MS9 | Implement System Recovery Mode | **NEXT** | v6.9.0 |
 
 ### Sprint Pipeline (MUST FOLLOW)
 
@@ -3331,19 +3330,36 @@ internal/
 │   ├── step.go                # Step interface, BaseStep, FuncStep
 │   ├── workflow.go            # Workflow interface, BaseWorkflow
 │   ├── context.go             # Installation context with state
+│   ├── orchestrator.go        # Workflow orchestrator
+│   ├── builder/               # Distribution-specific workflow builders
 │   └── steps/                 # Concrete step implementations
 │       ├── validation.go      # Pre-installation validation step
 │       ├── repository.go      # Repository configuration step
 │       ├── nouveau.go         # Nouveau blacklist step
 │       ├── packages.go        # Package installation step
-│       └── dkms.go            # DKMS module build step
+│       ├── dkms.go            # DKMS module build step
+│       ├── modload.go         # Module loading step
+│       ├── xorg.go            # X.org configuration step
+│       └── verify.go          # Post-installation verification step
+├── uninstall/                 # Uninstallation workflow (Phase 6)
+│   ├── types.go               # UninstallStatus, UninstallResult
+│   ├── step.go                # UninstallStep (alias for install.Step)
+│   ├── workflow.go            # UninstallWorkflow interface
+│   ├── context.go             # Uninstall context with state
+│   ├── discovery.go           # Package discovery for uninstall
+│   ├── orchestrator.go        # Uninstall orchestrator
+│   └── steps/                 # Uninstall step implementations
+│       ├── removal.go         # Package removal step
+│       ├── modunload.go       # Kernel module unload step
+│       ├── config.go          # Configuration cleanup step
+│       └── nouveau.go         # Nouveau restoration step
 ├── ui/                        # TUI framework (Phase 4)
 │   ├── app.go                 # Main model with navigation state machine
 │   ├── messages.go            # Message types
 │   ├── keys.go                # Key bindings
 │   ├── theme/                 # Theme and styles
 │   ├── components/            # Reusable UI components
-│   └── views/                 # Screen views (welcome, detection, etc.)
+│   └── views/                 # Screen views (welcome, detection, uninstall, etc.)
 ├── gpu/                       # GPU detection (Phase 3)
 │   ├── orchestrator.go        # Main GPU orchestrator
 │   ├── pci/                   # PCI device scanning
@@ -3392,8 +3408,8 @@ go test -cover ./internal/install/...
 ### Resume Instructions
 
 1. Read this file (IGOR_PROJECT.md) to understand current state
-2. Check `cat VERSION` to confirm current version (should be 5.6.0)
-3. Continue with next sprint: **P5-MS7 (Module Loading Step)**
+2. Check `cat VERSION` to confirm current version (should be 6.8.0)
+3. Continue with next sprint: **P6-MS9 (System Recovery Mode)**
 4. Follow the Sprint Pipeline exactly as documented above
 5. After each sprint, get human approval before committing
 
