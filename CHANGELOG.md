@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.11.0] - 2026-01-05
+
+### Added
+- Distribution-specific workflow builder (`internal/install/builder/`)
+- WorkflowBuilder struct for assembling installation workflows
+- BuilderConfig struct with skip flags for all steps:
+  - SkipValidation, SkipRepository, SkipNouveau, SkipDKMS
+  - SkipModuleLoad, SkipXorgConfig, SkipVerification
+  - CustomSteps for extensibility
+  - ValidationChecks and RequiredDiskMB configuration
+- Factory functions:
+  - NewWorkflowBuilder(dist, opts...): Create builder for a distribution
+  - DefaultBuilderConfig(): Returns default configuration
+  - BuilderForFamily(family): Convenience function for family-based creation
+- Functional options:
+  - WithSkipValidation, WithSkipRepository, WithSkipNouveau, WithSkipDKMS
+  - WithSkipModuleLoad, WithSkipXorgConfig, WithSkipVerification
+  - WithCustomSteps, WithValidationChecks, WithRequiredDiskMB
+  - WithBuilderConfig for setting entire config at once
+- Build() method creates workflow with name "{distro-family}-nvidia-installation"
+- Distribution-specific step ordering:
+  - Debian/RHEL/SUSE: All 8 steps (validation, repository, nouveau, packages, dkms, modload, xorg, verify)
+  - Arch: 7 steps (auto-skips repository - packages in official repos)
+- Error handling for nil distribution and unknown family
+- Helper methods: Config() returns defensive copy, Distribution() returns distro info
+- 98.7% test coverage
+- **PHASE 5 COMPLETE!**
+
 ## [5.10.0] - 2026-01-05
 
 ### Added
