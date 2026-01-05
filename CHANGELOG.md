@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.10.0] - 2026-01-05
+
+### Added
+- Workflow orchestrator (`internal/install/orchestrator.go`)
+- Orchestrator wraps workflows with additional orchestration features:
+  - Automatic rollback on failure
+  - Pre/post workflow execution hooks
+  - Pre/post step execution hooks
+  - Execution event logging
+  - Detailed execution reporting
+- ExecutionHook and StepHook function types for extensibility
+- ExecutionEventType enum for 13 event types
+- ExecutionEntry struct for execution event logging
+- ExecutionReport struct with comprehensive execution statistics:
+  - Steps executed, completed, skipped, failed counts
+  - Rollback status and success indicator
+  - Total duration and timing information
+- Functional options:
+  - WithAutoRollback: Enable automatic rollback on failure
+  - WithStopOnFirstError: Stop immediately on first error
+  - WithOrchestratorDryRun: Execute in dry-run mode
+  - WithPreExecuteHook/WithPostExecuteHook: Workflow-level hooks
+  - WithPreStepHook/WithPostStepHook: Step-level hooks
+  - WithOrchestratorProgress: Progress callback
+- Thread-safe implementation with proper mutex usage
+- Step-level rollback tracking for proper rollback when using hooks
+- 95.2% test coverage
+
 ## [5.9.0] - 2026-01-05
 
 ### Added
