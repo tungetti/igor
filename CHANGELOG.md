@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.9.0] - 2026-01-05
+
+### Added
+- System recovery mode (`internal/recovery/`)
+- Recovery mode detection and execution (`recovery.go`, 674 lines):
+  - EnvironmentType: TTY, Graphical (X11/Wayland), SSH detection
+  - DetectEnvironment: Checks DISPLAY, WAYLAND_DISPLAY, TERM env vars
+  - Recovery boot detection from /proc/cmdline (single, rescue, recovery)
+  - RecoveryMode struct with functional options pattern
+  - Integration with existing uninstall infrastructure
+  - Nouveau blacklist cleanup and initramfs rebuild
+  - Distribution-specific initramfs commands (Debian, RHEL, Arch, SUSE)
+- TTY-compatible minimal UI (`tty.go`, 362 lines):
+  - ASCII-only symbols: [OK], [FAIL], [!], [i], [..]
+  - Works on virtual console fonts (no Unicode)
+  - Lines under 80 characters
+  - Header, Status, Progress, Confirm prompts
+  - EOF/empty input handling
+  - Package list display with column layout
+- Functional options:
+  - WithRecoveryEnvironment: Set detected environment
+  - WithRecoveryDistro: Set distribution info
+  - WithRecoveryExecutor: Set command executor
+  - WithRecoveryPackageManager: Set package manager
+  - WithRecoveryLogger: Set logger
+  - WithRecoveryUI: Set custom TTY UI
+  - WithRecoveryOrchestrator: Set uninstall orchestrator
+  - WithRecoveryDiscovery: Set package discovery
+  - WithRecoveryDryRun: Enable dry-run mode
+  - WithRecoveryForce: Skip confirmations
+- Root privilege check before destructive operations
+- Continue-on-error for package removal failures
+- Optional reboot after recovery completion
+- 98.0% test coverage
+
 ## [6.8.0] - 2026-01-05
 
 ### Added
