@@ -63,8 +63,17 @@ type NVIDIAGPUInfo struct {
 	SMIInfo *smi.SMIGPUInfo
 }
 
-// Name returns the GPU name, preferring Model name over SMI name over device ID.
+// Name returns the GPU name, preferring lspci name over Model name over SMI name.
+// The priority order is:
+// 1. PCIDevice.Name (from lspci - most reliable, always up-to-date)
+// 2. Model.Name (from internal database - may be outdated for new GPUs)
+// 3. SMIInfo.Name (from nvidia-smi - only available if driver is loaded)
+// 4. Fallback to device ID
 func (g *NVIDIAGPUInfo) Name() string {
+	// Prefer lspci name as it's always current with system's pci.ids
+	if g.PCIDevice.Name != "" {
+		return g.PCIDevice.Name
+	}
 	if g.Model != nil {
 		return g.Model.Name
 	}
@@ -82,6 +91,24 @@ func (g *NVIDIAGPUInfo) Architecture() string {
 	return "unknown"
 }
 
+// AvailableDriver represents a driver version available for installation.
+type AvailableDriver struct {
+	// Version is the driver version (e.g., "560", "555", "550").
+	Version string
+
+	// FullVersion is the complete version string if available (e.g., "560.35.03").
+	FullVersion string
+
+	// Branch indicates the release branch (e.g., "Latest", "Production", "LTS", "Legacy").
+	Branch string
+
+	// PackageName is the package name in the repository.
+	PackageName string
+
+	// Recommended indicates if this is the recommended driver for the detected GPU.
+	Recommended bool
+}
+
 // GPUInfo represents complete GPU information collected from all detection components.
 type GPUInfo struct {
 	// Hardware detection
@@ -94,6 +121,9 @@ type GPUInfo struct {
 	// Driver status
 	// InstalledDriver contains information about the currently installed driver.
 	InstalledDriver *DriverInfo
+
+	// AvailableDrivers contains driver versions available for installation.
+	AvailableDrivers []AvailableDriver
 
 	// NouveauStatus contains the status of the Nouveau driver.
 	NouveauStatus *nouveau.Status

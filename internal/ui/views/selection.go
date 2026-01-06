@@ -170,18 +170,31 @@ func NewSelection(styles theme.Styles, version string, gpuInfo *gpu.GPUInfo) Sel
 
 // buildDriverOptions builds driver options based on the detected GPU.
 func buildDriverOptions(gpuInfo *gpu.GPUInfo) []DriverOption {
-	// Build options based on detected GPU architecture
-	// In a full implementation, this would check GPU architecture
-	// and filter compatible driver versions
-	options := []DriverOption{
+	// If we have dynamically detected available drivers, use those
+	if gpuInfo != nil && len(gpuInfo.AvailableDrivers) > 0 {
+		options := make([]DriverOption, 0, len(gpuInfo.AvailableDrivers))
+		for _, d := range gpuInfo.AvailableDrivers {
+			desc := getDriverDescription(d.Branch, d.FullVersion)
+			options = append(options, DriverOption{
+				Version:     d.Version,
+				Branch:      d.Branch,
+				Description: desc,
+				Recommended: d.Recommended,
+			})
+		}
+		return options
+	}
+
+	// Fallback to static options if dynamic detection failed
+	return []DriverOption{
 		{
-			Version:     "550",
+			Version:     "560",
 			Branch:      "Latest",
 			Description: "Latest features and performance improvements",
 			Recommended: true,
 		},
 		{
-			Version:     "545",
+			Version:     "550",
 			Branch:      "Production",
 			Description: "Stable production release",
 			Recommended: false,
@@ -199,8 +212,27 @@ func buildDriverOptions(gpuInfo *gpu.GPUInfo) []DriverOption {
 			Recommended: false,
 		},
 	}
+}
 
-	return options
+// getDriverDescription returns a description for a driver based on its branch.
+func getDriverDescription(branch, fullVersion string) string {
+	versionInfo := ""
+	if fullVersion != "" {
+		versionInfo = " (" + fullVersion + ")"
+	}
+
+	switch branch {
+	case "Latest":
+		return "Latest features and performance" + versionInfo
+	case "Production":
+		return "Stable production release" + versionInfo
+	case "LTS":
+		return "Long-term support, maximum stability" + versionInfo
+	case "Legacy":
+		return "For older GPUs" + versionInfo
+	default:
+		return "Available driver" + versionInfo
+	}
 }
 
 // buildComponentOptions builds the list of component options.

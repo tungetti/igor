@@ -44,6 +44,7 @@ type OrchestratorImpl struct {
 	kernelDetector  kernel.Detector
 	systemValidator validator.Validator
 	timeout         time.Duration
+	skipLspciEnrich bool // Skip lspci name enrichment (for testing)
 }
 
 // OrchestratorOption configures the orchestrator.
@@ -95,6 +96,13 @@ func WithSystemValidator(v validator.Validator) OrchestratorOption {
 func WithTimeout(timeout time.Duration) OrchestratorOption {
 	return func(o *OrchestratorImpl) {
 		o.timeout = timeout
+	}
+}
+
+// WithSkipLspciEnrich disables lspci-based GPU name enrichment (useful for testing).
+func WithSkipLspciEnrich(skip bool) OrchestratorOption {
+	return func(o *OrchestratorImpl) {
+		o.skipLspciEnrich = skip
 	}
 }
 
@@ -243,6 +251,15 @@ func (o *OrchestratorImpl) detectGPUsInternal(ctx context.Context) ([]NVIDIAGPUI
 		return nil, nil, errors.Wrap(errors.GPUDetection, "failed to scan NVIDIA GPUs", err).WithOp(op)
 	}
 
+	// Enrich devices with GPU names from lspci (unless disabled for testing)
+	// This provides more reliable names than database lookup
+	if !o.skipLspciEnrich {
+		lspciResolver := pci.NewLspciResolver()
+		if err := lspciResolver.EnrichDevicesWithNames(ctx, nvidiaDevices); err != nil {
+			// Non-fatal: continue without lspci names, will fall back to database
+		}
+	}
+
 	// Build NVIDIAGPUInfo for each device
 	gpuInfos := make([]NVIDIAGPUInfo, 0, len(nvidiaDevices))
 	for _, device := range nvidiaDevices {
@@ -250,7 +267,7 @@ func (o *OrchestratorImpl) detectGPUsInternal(ctx context.Context) ([]NVIDIAGPUI
 			PCIDevice: device,
 		}
 
-		// Lookup in database if available
+		// Lookup in database if available (as fallback for name)
 		if o.gpuDatabase != nil {
 			if model, found := o.gpuDatabase.Lookup(device.DeviceID); found {
 				gpuInfo.Model = model

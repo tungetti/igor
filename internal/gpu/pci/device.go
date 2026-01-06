@@ -56,6 +56,10 @@ type PCIDevice struct {
 
 	// Revision is the device revision ID
 	Revision string
+
+	// Name is the human-readable device name from lspci (e.g., "GeForce RTX 4090")
+	// This is populated by running lspci and is more reliable than database lookup.
+	Name string
 }
 
 // IsNVIDIA returns true if this device is manufactured by NVIDIA.

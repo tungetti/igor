@@ -294,9 +294,18 @@ func TestApp_NavigationFlow(t *testing.T) {
 		m = updateModel(m, views.NavigateToDriverSelectionMsg{GPUInfo: gpuInfo})
 		assert.Equal(t, ViewDriverSelection, m.CurrentView)
 
-		// Press escape to go back to welcome
-		m = updateModel(m, simulateEscape())
-		assert.Equal(t, ViewWelcome, m.CurrentView)
+		// Press escape - selection view returns NavigateToDetectionMsg
+		// We need to simulate the full message flow
+		_, cmd := m.Update(simulateEscape())
+		if cmd != nil {
+			result := cmd()
+			// Process the navigation message
+			if _, ok := result.(views.NavigateToDetectionMsg); ok {
+				m = updateModel(m, result)
+			}
+		}
+		// After escape from selection, we should be in detection view (back navigation)
+		assert.Equal(t, ViewDetecting, m.CurrentView)
 	})
 
 	t.Run("NavigateBackToSelectionMsg returns to selection", func(t *testing.T) {
@@ -334,9 +343,9 @@ func TestApp_NavigationFlow(t *testing.T) {
 		_, cmd := m.Update(simulateEscape())
 		require.NotNil(t, cmd)
 
-		// Command should return QuitMsg
+		// Command should return tea.QuitMsg (from tea.Quit)
 		result := cmd()
-		_, ok := result.(QuitMsg)
+		_, ok := result.(tea.QuitMsg)
 		assert.True(t, ok)
 	})
 }
@@ -353,8 +362,9 @@ func TestApp_KeyboardInteraction(t *testing.T) {
 		_, cmd := m.Update(simulateKeyPress("q"))
 		require.NotNil(t, cmd)
 
+		// q key is handled by the welcome view which returns tea.Quit
 		result := cmd()
-		_, ok := result.(QuitMsg)
+		_, ok := result.(tea.QuitMsg)
 		assert.True(t, ok)
 	})
 

@@ -21,7 +21,8 @@ func TestParseNoArgs(t *testing.T) {
 	result, err := p.Parse([]string{})
 
 	require.NoError(t, err)
-	assert.True(t, result.ShowHelp)
+	// No args = launch TUI (CommandNone), not show help
+	assert.False(t, result.ShowHelp)
 	assert.Equal(t, CommandNone, result.Command)
 }
 
@@ -708,7 +709,9 @@ func TestParseOnlyFlags(t *testing.T) {
 	result, err := p.Parse([]string{"-v", "--dry-run"})
 
 	require.NoError(t, err)
-	assert.True(t, result.ShowHelp)
+	// Only flags without command = launch TUI (CommandNone), not show help
+	assert.False(t, result.ShowHelp)
+	assert.Equal(t, CommandNone, result.Command)
 	assert.True(t, result.GlobalFlags.Verbose)
 	assert.True(t, result.GlobalFlags.DryRun)
 }

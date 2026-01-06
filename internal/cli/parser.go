@@ -69,7 +69,8 @@ func (p *Parser) Parse(args []string) (*ParseResult, error) {
 	result := &ParseResult{}
 
 	if len(args) == 0 {
-		result.ShowHelp = true
+		// No arguments - return CommandNone to launch TUI
+		result.Command = CommandNone
 		return result, nil
 	}
 
@@ -93,8 +94,8 @@ func (p *Parser) Parse(args []string) (*ParseResult, error) {
 	remaining := globalFs.Args()
 
 	if len(remaining) == 0 {
-		// No command specified, show help
-		result.ShowHelp = true
+		// No command specified after global flags - return CommandNone to launch TUI
+		result.Command = CommandNone
 		return result, nil
 	}
 

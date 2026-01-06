@@ -158,7 +158,10 @@ func (s *ScannerImpl) scan(ctx context.Context, filter func(*PCIDevice) bool) ([
 		default:
 		}
 
-		if !entry.IsDir() {
+		// In /sys/bus/pci/devices/, entries are symlinks to directories
+		// We need to check if the entry is a directory OR a symlink
+		// Note: entry.IsDir() returns false for symlinks even if they point to directories
+		if !entry.IsDir() && entry.Type()&os.ModeSymlink == 0 {
 			continue
 		}
 

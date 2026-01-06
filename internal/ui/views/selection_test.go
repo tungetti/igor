@@ -250,7 +250,8 @@ func TestBuildDriverOptions_HasRecommended(t *testing.T) {
 func TestBuildDriverOptions_VersionsMatch(t *testing.T) {
 	options := buildDriverOptions(nil)
 
-	expectedVersions := []string{"550", "545", "535", "470"}
+	// Static fallback versions: 560 (Latest), 550 (Production), 535 (LTS), 470 (Legacy)
+	expectedVersions := []string{"560", "550", "535", "470"}
 	for i, opt := range options {
 		assert.Equal(t, expectedVersions[i], opt.Version)
 	}
@@ -868,8 +869,9 @@ func TestSelectionModel_View_ShowsAllDriverVersions(t *testing.T) {
 
 	view := m.View()
 
+	// Static fallback versions: 560 (Latest), 550 (Production), 535 (LTS), 470 (Legacy)
+	assert.Contains(t, view, "560")
 	assert.Contains(t, view, "550")
-	assert.Contains(t, view, "545")
 	assert.Contains(t, view, "535")
 	assert.Contains(t, view, "470")
 }
@@ -939,7 +941,8 @@ func TestSelectionModel_SelectedDriverOption(t *testing.T) {
 
 	opt := m.SelectedDriverOption()
 
-	assert.Equal(t, "550", opt.Version)
+	// First option is 560 (Latest, Recommended)
+	assert.Equal(t, "560", opt.Version)
 	assert.Equal(t, "Latest", opt.Branch)
 	assert.True(t, opt.Recommended)
 }

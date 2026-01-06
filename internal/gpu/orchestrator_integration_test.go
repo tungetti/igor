@@ -124,6 +124,7 @@ func TestOrchestrator_CompleteDetectionWorkflow(t *testing.T) {
 		// Create orchestrator with all components
 		o := NewOrchestrator(
 			WithPCIScanner(scanner),
+			WithSkipLspciEnrich(true),
 			WithGPUDatabase(database),
 			WithSMIParser(parser),
 			WithNouveauDetector(nouveauDet),
@@ -217,6 +218,7 @@ func TestOrchestrator_CompleteDetectionWorkflow(t *testing.T) {
 
 		o := NewOrchestrator(
 			WithPCIScanner(scanner),
+			WithSkipLspciEnrich(true),
 			WithGPUDatabase(database),
 			WithSMIParser(parser),
 		)
@@ -273,6 +275,7 @@ func TestOrchestrator_MultiGPUScenarios(t *testing.T) {
 
 		o := NewOrchestrator(
 			WithPCIScanner(scanner),
+			WithSkipLspciEnrich(true),
 			WithGPUDatabase(database),
 			WithSMIParser(parser),
 		)
@@ -319,6 +322,7 @@ func TestOrchestrator_MultiGPUScenarios(t *testing.T) {
 
 		o := NewOrchestrator(
 			WithPCIScanner(scanner),
+			WithSkipLspciEnrich(true),
 			WithGPUDatabase(database),
 			WithSMIParser(parser),
 		)
@@ -377,6 +381,7 @@ func TestOrchestrator_MultiGPUScenarios(t *testing.T) {
 
 		o := NewOrchestrator(
 			WithPCIScanner(scanner),
+			WithSkipLspciEnrich(true),
 			WithGPUDatabase(database),
 			WithSMIParser(parser),
 		)
@@ -440,6 +445,7 @@ func TestOrchestrator_MultiGPUScenarios(t *testing.T) {
 
 		o := NewOrchestrator(
 			WithPCIScanner(scanner),
+			WithSkipLspciEnrich(true),
 			WithGPUDatabase(database),
 			WithSMIParser(parser),
 		)
@@ -481,6 +487,7 @@ func TestOrchestrator_ErrorRecovery(t *testing.T) {
 
 		o := NewOrchestrator(
 			WithPCIScanner(scanner),
+			WithSkipLspciEnrich(true),
 			WithKernelDetector(kernelDet),
 			WithNouveauDetector(nouveauDet),
 		)
@@ -526,6 +533,7 @@ func TestOrchestrator_ErrorRecovery(t *testing.T) {
 
 		o := NewOrchestrator(
 			WithPCIScanner(scanner),
+			WithSkipLspciEnrich(true),
 			WithGPUDatabase(database),
 			WithSMIParser(parser),
 		)
@@ -559,6 +567,7 @@ func TestOrchestrator_ErrorRecovery(t *testing.T) {
 
 		o := NewOrchestrator(
 			WithPCIScanner(scanner),
+			WithSkipLspciEnrich(true),
 			WithGPUDatabase(database),
 		)
 
@@ -602,6 +611,7 @@ func TestOrchestrator_ErrorRecovery(t *testing.T) {
 
 		o := NewOrchestrator(
 			WithPCIScanner(scanner),
+			WithSkipLspciEnrich(true),
 			WithGPUDatabase(database),
 			WithSystemValidator(val),
 		)
@@ -646,6 +656,7 @@ func TestOrchestrator_ErrorRecovery(t *testing.T) {
 
 		o := NewOrchestrator(
 			WithPCIScanner(scanner),
+			WithSkipLspciEnrich(true),
 			WithSMIParser(parser),
 			WithNouveauDetector(nouveauDet),
 		)
@@ -705,6 +716,7 @@ func TestOrchestrator_ConcurrentDetection(t *testing.T) {
 
 		o := NewOrchestrator(
 			WithPCIScanner(scanner),
+			WithSkipLspciEnrich(true),
 			WithGPUDatabase(database),
 			WithSMIParser(parser),
 			WithNouveauDetector(nouveauDet),
@@ -766,6 +778,7 @@ func TestOrchestrator_ConcurrentDetection(t *testing.T) {
 
 		o := NewOrchestrator(
 			WithPCIScanner(scanner),
+			WithSkipLspciEnrich(true),
 			WithGPUDatabase(database),
 			WithSMIParser(parser),
 		)
@@ -825,6 +838,7 @@ func BenchmarkOrchestrator_Detect(b *testing.B) {
 
 	o := NewOrchestrator(
 		WithPCIScanner(scanner),
+			WithSkipLspciEnrich(true),
 		WithGPUDatabase(database),
 		WithSMIParser(parser),
 		WithNouveauDetector(nouveauDet),
@@ -852,6 +866,7 @@ func BenchmarkOrchestrator_DetectGPUs(b *testing.B) {
 
 	o := NewOrchestrator(
 		WithPCIScanner(scanner),
+			WithSkipLspciEnrich(true),
 		WithGPUDatabase(database),
 	)
 
@@ -875,6 +890,7 @@ func BenchmarkOrchestrator_GetDriverStatus(b *testing.B) {
 
 	o := NewOrchestrator(
 		WithPCIScanner(scanner),
+			WithSkipLspciEnrich(true),
 		WithSMIParser(parser),
 	)
 
@@ -902,6 +918,7 @@ func BenchmarkOrchestrator_IsReadyForInstall(b *testing.B) {
 
 	o := NewOrchestrator(
 		WithPCIScanner(scanner),
+			WithSkipLspciEnrich(true),
 		WithGPUDatabase(database),
 		WithSystemValidator(val),
 	)
@@ -926,6 +943,7 @@ func BenchmarkOrchestrator_Concurrent(b *testing.B) {
 
 	o := NewOrchestrator(
 		WithPCIScanner(scanner),
+			WithSkipLspciEnrich(true),
 		WithGPUDatabase(database),
 	)
 

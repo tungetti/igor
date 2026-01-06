@@ -384,6 +384,7 @@ func TestNewOrchestrator(t *testing.T) {
 
 		o := NewOrchestrator(
 			WithPCIScanner(scanner),
+			WithSkipLspciEnrich(true),
 			WithGPUDatabase(database),
 			WithSMIParser(parser),
 			WithNouveauDetector(detector),
@@ -430,6 +431,7 @@ func TestOrchestrator_DetectAll(t *testing.T) {
 
 		o := NewOrchestrator(
 			WithPCIScanner(scanner),
+			WithSkipLspciEnrich(true),
 			WithGPUDatabase(database),
 			WithSMIParser(parser),
 			WithNouveauDetector(nouveauDet),
@@ -464,6 +466,7 @@ func TestOrchestrator_DetectAll(t *testing.T) {
 
 		o := NewOrchestrator(
 			WithPCIScanner(scanner),
+			WithSkipLspciEnrich(true),
 			WithSMIParser(parser),
 		)
 
@@ -517,7 +520,9 @@ func TestOrchestrator_DetectGPUs(t *testing.T) {
 
 		o := NewOrchestrator(
 			WithPCIScanner(scanner),
+			WithSkipLspciEnrich(true),
 			WithGPUDatabase(database),
+			WithSkipLspciEnrich(true),
 		)
 
 		ctx := context.Background()
@@ -546,7 +551,9 @@ func TestOrchestrator_DetectGPUs(t *testing.T) {
 
 		o := NewOrchestrator(
 			WithPCIScanner(scanner),
+			WithSkipLspciEnrich(true),
 			WithGPUDatabase(database),
+			WithSkipLspciEnrich(true),
 		)
 
 		ctx := context.Background()
@@ -570,7 +577,9 @@ func TestOrchestrator_DetectGPUs(t *testing.T) {
 
 		o := NewOrchestrator(
 			WithPCIScanner(scanner),
+			WithSkipLspciEnrich(true),
 			WithSMIParser(parser),
+			WithSkipLspciEnrich(true),
 		)
 
 		ctx := context.Background()
@@ -608,6 +617,7 @@ func TestOrchestrator_GetDriverStatus(t *testing.T) {
 
 		o := NewOrchestrator(
 			WithPCIScanner(scanner),
+			WithSkipLspciEnrich(true),
 			WithSMIParser(parser),
 		)
 
@@ -656,6 +666,7 @@ func TestOrchestrator_GetDriverStatus(t *testing.T) {
 
 		o := NewOrchestrator(
 			WithPCIScanner(scanner),
+			WithSkipLspciEnrich(true),
 			WithSMIParser(parser),
 			WithNouveauDetector(nouveauDet),
 		)
@@ -680,6 +691,7 @@ func TestOrchestrator_GetDriverStatus(t *testing.T) {
 
 		o := NewOrchestrator(
 			WithPCIScanner(scanner),
+			WithSkipLspciEnrich(true),
 			WithSMIParser(parser),
 			WithNouveauDetector(nouveauDet),
 		)
@@ -738,6 +750,7 @@ func TestOrchestrator_IsReadyForInstall(t *testing.T) {
 
 		o := NewOrchestrator(
 			WithPCIScanner(scanner),
+			WithSkipLspciEnrich(true),
 			WithGPUDatabase(database),
 			WithSystemValidator(val),
 		)
@@ -779,6 +792,7 @@ func TestOrchestrator_IsReadyForInstall(t *testing.T) {
 
 		o := NewOrchestrator(
 			WithPCIScanner(scanner),
+			WithSkipLspciEnrich(true),
 			WithGPUDatabase(database),
 			WithSystemValidator(val),
 		)
@@ -809,6 +823,7 @@ func TestOrchestrator_IsReadyForInstall(t *testing.T) {
 
 		o := NewOrchestrator(
 			WithPCIScanner(scanner),
+			WithSkipLspciEnrich(true),
 			WithGPUDatabase(database),
 			WithSystemValidator(val),
 			WithNouveauDetector(nouveauDet),
@@ -932,6 +947,7 @@ func TestOrchestrator_Timeout(t *testing.T) {
 
 		o := NewOrchestrator(
 			WithPCIScanner(scanner),
+			WithSkipLspciEnrich(true),
 			WithTimeout(50*time.Millisecond),
 		)
 

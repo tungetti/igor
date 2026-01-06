@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.7.0] - 2026-01-06
+
+### Added
+- **lspci-based GPU name detection** (`internal/gpu/pci/lspci.go`):
+  - Uses `lspci -D` for reliable GPU name resolution across all Linux distributions
+  - Matches PCI addresses correctly regardless of bus location (01:00.0, 03:00.0, etc.)
+  - Graceful fallback when `lspci` is not installed
+  - Priority: lspci name > GPU database > nvidia-smi > device ID
+
+### Fixed
+- **Critical: PCI scanner not detecting GPUs** - The scanner was checking `entry.IsDir()` but sysfs entries in `/sys/bus/pci/devices/` are symlinks, not directories. Fixed to also accept symlinks.
+- **GPU showing as "Unknown GPU"** - The confirmation view was prioritizing `Model.Name` over the `Name()` method. Fixed to always use `Name()` which now includes lspci resolution.
+- **TUI not launching with no arguments** - Running `igor` without arguments now correctly launches the TUI instead of showing help.
+- **Keys not working in TUI** - Fixed key handling to delegate to active views instead of intercepting globally.
+
+### Changed
+- Updated driver selection fallback versions to 560 (Latest), 550 (Production), 535 (LTS), 470 (Legacy)
+- Improved test coverage for key handling and view navigation
+
 ## [7.6.0] - 2026-01-05
 
 ### Added

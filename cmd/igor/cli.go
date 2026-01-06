@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"os"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/tungetti/igor/internal/cli"
 	"github.com/tungetti/igor/internal/config"
 	"github.com/tungetti/igor/internal/constants"
+	"github.com/tungetti/igor/internal/ui"
 )
 
 // CLI encapsulates the command-line interface for Igor.
@@ -111,10 +113,30 @@ func (c *CLI) executeCommand(result *cli.ParseResult) int {
 		return c.cmdDetect(result)
 	case cli.CommandList:
 		return c.cmdList(result)
+	case cli.CommandNone:
+		// No command specified - launch the interactive TUI
+		return c.cmdTUI()
 	default:
 		fmt.Print(c.parser.Usage())
 		return constants.ExitSuccess.Int()
 	}
+}
+
+// cmdTUI launches the interactive TUI installer.
+func (c *CLI) cmdTUI() int {
+	// Create the TUI model with version info
+	model := ui.NewWithVersion(Version)
+
+	// Create the Bubble Tea program
+	p := tea.NewProgram(model, tea.WithAltScreen())
+
+	// Run the TUI
+	if _, err := p.Run(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error running TUI: %v\n", err)
+		return constants.ExitError.Int()
+	}
+
+	return constants.ExitSuccess.Int()
 }
 
 // cmdVersion displays version information.

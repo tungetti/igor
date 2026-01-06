@@ -276,11 +276,8 @@ func (m ConfirmationModel) renderGPUSection() string {
 
 	gpuName := "Unknown GPU"
 	if m.gpuInfo != nil && len(m.gpuInfo.NVIDIAGPUs) > 0 {
-		if m.gpuInfo.NVIDIAGPUs[0].Model != nil {
-			gpuName = m.gpuInfo.NVIDIAGPUs[0].Model.Name
-		} else {
-			gpuName = m.gpuInfo.NVIDIAGPUs[0].Name()
-		}
+		// Use the Name() method which prioritizes lspci name > Model name > SMI name
+		gpuName = m.gpuInfo.NVIDIAGPUs[0].Name()
 	}
 
 	return subtitle + " " + m.styles.GPUName.Render(gpuName)

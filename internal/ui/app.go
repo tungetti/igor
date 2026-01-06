@@ -5,11 +5,24 @@ package ui
 
 import (
 	"context"
+	"regexp"
+	"sort"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/tungetti/igor/internal/distro"
+	"github.com/tungetti/igor/internal/exec"
 	"github.com/tungetti/igor/internal/gpu"
+	"github.com/tungetti/igor/internal/gpu/kernel"
+	"github.com/tungetti/igor/internal/gpu/nouveau"
+	"github.com/tungetti/igor/internal/gpu/nvidia"
+	"github.com/tungetti/igor/internal/gpu/pci"
+	"github.com/tungetti/igor/internal/gpu/smi"
+	"github.com/tungetti/igor/internal/gpu/validator"
+	"github.com/tungetti/igor/internal/pkg"
+	"github.com/tungetti/igor/internal/pkg/factory"
 	"github.com/tungetti/igor/internal/ui/theme"
 	"github.com/tungetti/igor/internal/ui/views"
 )
@@ -202,7 +215,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case views.StartDetectionMsg:
 		m.CurrentView = ViewDetecting
 		m.detectionView = m.initDetectionView()
-		return m, m.detectionView.Init()
+		// Start both the spinner animation and the actual detection
+		return m, tea.Batch(m.detectionView.Init(), m.runDetection())
 
 	case views.DetectionCompleteMsg:
 		m.gpuInfo = msg.GPUInfo
@@ -358,22 +372,14 @@ func (m Model) renderPlaceholder(title string) string {
 
 // handleKeyPress handles key press events.
 func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	// Only handle ctrl+c globally - let views handle other keys
 	switch msg.String() {
-	case "q", "ctrl+c":
+	case "ctrl+c":
 		return m, func() tea.Msg { return QuitMsg{} }
-
-	case "esc":
-		// Go back to previous view or quit from welcome
-		if m.CurrentView == ViewWelcome {
-			return m, func() tea.Msg { return QuitMsg{} }
-		}
-		// For now, go back to welcome
-		m.CurrentView = ViewWelcome
-		m.Error = nil // Clear any error when navigating away
-		return m, nil
 	}
 
-	return m, nil
+	// Delegate all other key presses to the active view
+	return m.delegateToActiveView(msg)
 }
 
 // waitForWindowSize returns a command that signals the window is ready.
@@ -575,4 +581,207 @@ func (m Model) delegateToActiveView(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 	}
 	return m, nil
+}
+
+// =============================================================================
+// GPU Detection
+// =============================================================================
+
+// runDetection runs the GPU detection asynchronously and returns a command.
+func (m Model) runDetection() tea.Cmd {
+	return func() tea.Msg {
+		// Create the executor with default options
+		executor := exec.NewExecutor(exec.DefaultOptions(), nil)
+
+		// Create individual detectors
+		pciScanner := pci.NewScanner()
+		gpuDatabase := nvidia.NewDatabase()
+		smiParser := smi.NewParser(executor)
+		nouveauDetector := nouveau.NewDetector()
+		kernelDetector := kernel.NewDetector(kernel.WithExecutor(executor))
+		systemValidator := validator.NewValidator(validator.WithExecutor(executor))
+
+		// Create the orchestrator with all detectors
+		orchestrator := gpu.NewOrchestrator(
+			gpu.WithPCIScanner(pciScanner),
+			gpu.WithGPUDatabase(gpuDatabase),
+			gpu.WithSMIParser(smiParser),
+			gpu.WithNouveauDetector(nouveauDetector),
+			gpu.WithKernelDetector(kernelDetector),
+			gpu.WithSystemValidator(systemValidator),
+		)
+
+		// Run detection
+		gpuInfo, err := orchestrator.DetectAll(m.ctx)
+		if err != nil {
+			return views.DetectionErrorMsg{Error: err}
+		}
+
+		// Query available drivers from the package manager
+		availableDrivers := queryAvailableDrivers(m.ctx, executor)
+		if len(availableDrivers) > 0 {
+			gpuInfo.AvailableDrivers = availableDrivers
+		}
+
+		return views.DetectionCompleteMsg{GPUInfo: gpuInfo}
+	}
+}
+
+// queryAvailableDrivers queries the package manager for available NVIDIA drivers.
+func queryAvailableDrivers(ctx context.Context, executor exec.Executor) []gpu.AvailableDriver {
+	// Detect distribution
+	detector := distro.NewDetector(executor, nil)
+	dist, err := detector.Detect(ctx)
+	if err != nil {
+		return nil
+	}
+
+	// Create package manager for this distribution
+	pkgFactory := factory.NewFactory(executor, nil, detector)
+	pkgManager, err := pkgFactory.CreateForDistribution(dist)
+	if err != nil {
+		return nil
+	}
+
+	// Search for NVIDIA driver packages
+	searchOpts := pkg.DefaultSearchOptions()
+
+	packages, err := pkgManager.Search(ctx, "nvidia", searchOpts)
+	if err != nil {
+		return nil
+	}
+
+	// Parse driver versions from package names
+	return parseDriverPackages(packages, dist)
+}
+
+// parseDriverPackages extracts driver versions from package search results.
+func parseDriverPackages(packages []pkg.Package, dist *distro.Distribution) []gpu.AvailableDriver {
+	// Regex patterns for different distros
+	var versionPattern *regexp.Regexp
+
+	switch dist.Family.String() {
+	case "arch":
+		// Arch: nvidia, nvidia-lts, nvidia-dkms, nvidia-open, etc.
+		// Also check AUR for specific versions
+		versionPattern = regexp.MustCompile(`nvidia[-_]?(\d{3})`)
+	case "debian":
+		// Debian/Ubuntu: nvidia-driver-550, nvidia-driver-545, etc.
+		versionPattern = regexp.MustCompile(`nvidia-driver-(\d{3})`)
+	case "rhel":
+		// RHEL/Fedora: nvidia-driver or akmod-nvidia with version in description
+		versionPattern = regexp.MustCompile(`nvidia.*?(\d{3})`)
+	case "suse":
+		// openSUSE: nvidia-driver-G06, nvidia-driver-G05, etc. or version numbers
+		versionPattern = regexp.MustCompile(`nvidia.*?(\d{3})`)
+	default:
+		versionPattern = regexp.MustCompile(`nvidia.*?(\d{3})`)
+	}
+
+	// Track unique versions
+	versionMap := make(map[string]*gpu.AvailableDriver)
+
+	for _, p := range packages {
+		// Check package name
+		matches := versionPattern.FindStringSubmatch(strings.ToLower(p.Name))
+		if len(matches) >= 2 {
+			version := matches[1]
+			if _, exists := versionMap[version]; !exists {
+				versionMap[version] = &gpu.AvailableDriver{
+					Version:     version,
+					FullVersion: p.Version,
+					PackageName: p.Name,
+					Branch:      classifyDriverBranch(version),
+				}
+			}
+		}
+
+		// Also check version field for full version
+		if existing, exists := versionMap[extractMajorVersion(p.Version)]; exists {
+			if existing.FullVersion == "" || len(p.Version) > len(existing.FullVersion) {
+				existing.FullVersion = p.Version
+			}
+		}
+	}
+
+	// Handle Arch Linux special case - check for main nvidia package
+	if dist.Family.String() == "arch" {
+		for _, p := range packages {
+			if p.Name == "nvidia" || p.Name == "nvidia-dkms" || p.Name == "nvidia-open" {
+				// Get version from the package version field
+				majorVer := extractMajorVersion(p.Version)
+				if majorVer != "" {
+					if _, exists := versionMap[majorVer]; !exists {
+						versionMap[majorVer] = &gpu.AvailableDriver{
+							Version:     majorVer,
+							FullVersion: p.Version,
+							PackageName: p.Name,
+							Branch:      "Latest",
+							Recommended: true,
+						}
+					} else {
+						// Update existing with full version
+						versionMap[majorVer].FullVersion = p.Version
+						if p.Name == "nvidia" || p.Name == "nvidia-dkms" {
+							versionMap[majorVer].Recommended = true
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Convert map to slice and sort by version (descending)
+	drivers := make([]gpu.AvailableDriver, 0, len(versionMap))
+	for _, d := range versionMap {
+		drivers = append(drivers, *d)
+	}
+
+	sort.Slice(drivers, func(i, j int) bool {
+		return drivers[i].Version > drivers[j].Version
+	})
+
+	// Mark the first (highest version) as recommended if none marked
+	hasRecommended := false
+	for _, d := range drivers {
+		if d.Recommended {
+			hasRecommended = true
+			break
+		}
+	}
+	if !hasRecommended && len(drivers) > 0 {
+		drivers[0].Recommended = true
+	}
+
+	return drivers
+}
+
+// extractMajorVersion extracts the major version (e.g., "560" from "560.35.03").
+func extractMajorVersion(version string) string {
+	parts := strings.Split(version, ".")
+	if len(parts) > 0 {
+		// Get first 3 digits if available
+		major := parts[0]
+		if len(major) >= 3 {
+			return major[:3]
+		}
+		return major
+	}
+	return ""
+}
+
+// classifyDriverBranch classifies a driver version into a branch.
+func classifyDriverBranch(version string) string {
+	switch {
+	case version >= "560":
+		return "Latest"
+	case version >= "550":
+		return "Production"
+	case version >= "535":
+		return "LTS"
+	case version >= "470":
+		return "Legacy"
+	default:
+		return "Legacy"
+	}
 }
